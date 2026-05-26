@@ -16,7 +16,7 @@ For test run commands, see `docs/architecture/tech-stack.md §2`.
 | Backend integration (multi-module or cross-layer) | `tests/[spec-slug]/` top-level directory |
 | E2E / full user flow | `tests/[spec-slug]/` top-level directory |
 
-`[spec-slug]` matches the spec filename slug (e.g., `tests/docker-stack/` for `SPEC-01_docker-stack.md`).
+`[spec-slug]` matches the spec filename slug (e.g., `tests/radar/` for `SPEC-01_radar.md`).
 
 ---
 
@@ -39,16 +39,16 @@ Every test function must include a traceability link as the **first line** of th
 ### Python
 
 ```python
-def test_postgres_connection_resilience():
-    # REQ: docs/specs/SPEC-01_docker-stack.md#FC-01-02
+def test_rediscovers_device_after_offline_window():
+    # REQ: docs/specs/SPEC-XX_module-slug.md#FC-XX-02
     ...
 ```
 
 ### TypeScript / JavaScript
 
 ```typescript
-test('displays active connection status container', () => {
-    // REQ: docs/specs/SPEC-01_docker-stack.md#REQ-01-05
+test('renders empty state when no devices have been discovered', () => {
+    // REQ: docs/specs/SPEC-XX_module-slug.md#REQ-XX-05
     ...
 });
 ```
@@ -86,14 +86,14 @@ This policy applies to all production code written by the Implementor:
 ### Traceability Link Format (Implementation Code)
 
 ```python
-# REQ: docs/specs/SPEC-01_docker-stack.md#REQ-01-03
-async def start_backend_service():
+# REQ: docs/specs/SPEC-XX_module-slug.md#REQ-XX-03
+async def discover_devices_on_subnet(cidr: str) -> list[Device]:
     ...
 ```
 
 ```typescript
-// REQ: docs/specs/SPEC-01_docker-stack.md#REQ-01-04
-export function initFrontend() {
+// REQ: docs/specs/SPEC-XX_module-slug.md#REQ-XX-04
+export function renderDeviceList(devices: Device[]) {
     ...
 }
 ```

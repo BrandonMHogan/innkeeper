@@ -32,7 +32,7 @@ A single technically-comfortable operator (the project owner) running the server
 
 ## Current State
 
-Greenfield. The repository is initialized with Docker Compose, FastAPI, Svelte 5, and PostgreSQL scaffolding (see `docs/environment.md`). No module specs are written yet. The immediate next step is the SPEC-01 spec for Radar (device discovery and inventory), followed by SPEC-02 for Watch Dog.
+Greenfield. The tech stack is recorded in `docs/architecture/tech-stack.md` and the runtime/setup in `docs/environment.md`. Containerization and stack setup are **not** spec'd — they are setup concerns, not module behavior. Module specs (Radar, Watch Dog, etc.) live under `docs/specs/`; `docs/specs/INDEX.md` lists which exist and their status.
 
 ## High-Level Goals
 
