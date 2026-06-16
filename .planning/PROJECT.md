@@ -86,14 +86,17 @@ See every device on your network and what it's doing, in real time — and be ab
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Python 3.12 + FastAPI for backend | Best network library ecosystem (Scapy, python-nmap, aiounifi); async-native; easy for open-source contributions | — Pending |
+| Python 3.13 + FastAPI for backend | aiounifi v91 requires Python ≥ 3.13; best network library ecosystem (Scapy, python-nmap, aiounifi); async-native; easy for open-source contributions | — Pending |
 | Svelte 5 + TypeScript for frontend | User preference; clean syntax; smaller bundle than React; good for dashboard UIs | — Pending |
 | PostgreSQL + TimescaleDB for all data | Single DB for config + time-series; SQL querying; Grafana-compatible; no InfluxDB query language to learn | — Pending |
 | SSE over WebSockets for real-time | Dashboard data flows server → client only; SSE auto-reconnects, works through HTTP proxies, simpler to maintain | — Pending |
 | Adapter pattern for router integrations | UniFi first, but architecture is extensible — enables other router brands and open-source contributions without core changes | — Pending |
 | Dual-mode (home/travel) | Home network gives full control via router API; untrusted networks fall back to passive scanning focused on user's own registered devices | — Pending |
 | Docker Compose deployment | Maximum portability; single-command setup; enables open-source adoption without complex install instructions | — Pending |
-| Curated integrations over plugin marketplace | Focused quality > open extensibility for v1; marketplace is a future milestone once core platform is proven | — Pending |
+| Plugin-first architecture | All integrations (UniFi, Pi-hole, Grafana, ntfy.sh) are implemented as first-party plugins using the plugin contract — proves the system and enables third-party plugins later without architectural changes | — Pending |
+| Plugin UI via dedicated routes | Each plugin gets its own page at /plugins/[name]; no module federation or Svelte rebuild required to add/remove plugins | — Pending |
+| Plugin contract scope | Plugins can: add a UI page, subscribe to platform events, add API routes, register data collectors; they cannot replace core platform components | — Pending |
+| No plugin marketplace in v1 | Config-file + dashboard toggle is sufficient; hosted registry is a future business decision | — Pending |
 | ntfy.sh / Pushover for push notifications | Lightweight, self-hostable (ntfy.sh), no proprietary push infrastructure required | — Pending |
 | UniFi as first router integration target | User's planned router; strong API via aiounifi; large prosumer user base = most impactful first adapter | — Pending |
 
