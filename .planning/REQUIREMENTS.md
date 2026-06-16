@@ -131,44 +131,47 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DISC-01 | — | Pending |
-| DISC-02 | — | Pending |
-| DISC-03 | — | Pending |
-| DISC-04 | — | Pending |
-| TRAF-01 | — | Pending |
-| TRAF-02 | — | Pending |
-| TRAF-03 | — | Pending |
-| TRAF-04 | — | Pending |
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| CTRL-01 | — | Pending |
-| CTRL-02 | — | Pending |
-| MODE-01 | — | Pending |
-| MODE-02 | — | Pending |
-| MODE-03 | — | Pending |
-| MODE-04 | — | Pending |
-| VIZ-01 | — | Pending |
-| VIZ-02 | — | Pending |
-| PLUG-01 | — | Pending |
-| PLUG-02 | — | Pending |
-| PLUG-03 | — | Pending |
-| PLUG-04 | — | Pending |
-| PLUG-05 | — | Pending |
-| FPLG-01 | — | Pending |
-| FPLG-02 | — | Pending |
-| FPLG-03 | — | Pending |
-| FPLG-04 | — | Pending |
-| PLAT-01 | — | Pending |
-| PLAT-02 | — | Pending |
-| PLAT-03 | — | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| DISC-01 | Phase 2 | Pending |
+| DISC-02 | Phase 2 | Pending |
+| DISC-03 | Phase 2 | Pending |
+| DISC-04 | Phase 2 | Pending |
+| TRAF-01 | Phase 3 | Pending |
+| TRAF-02 | Phase 3 | Pending |
+| TRAF-03 | Phase 3 | Pending |
+| TRAF-04 | Phase 3 | Pending |
+| SEC-01 | Phase 4 | Pending |
+| SEC-02 | Phase 4 | Pending |
+| SEC-03 | Phase 4 | Pending |
+| SEC-04 | Phase 4 | Pending |
+| PLUG-01 | Phase 5 | Pending |
+| PLUG-02 | Phase 5 | Pending |
+| PLUG-03 | Phase 5 | Pending |
+| PLUG-04 | Phase 5 | Pending |
+| PLUG-05 | Phase 5 | Pending |
+| FPLG-04 | Phase 5 | Pending |
+| MODE-02 | Phase 6 | Pending |
+| MODE-03 | Phase 6 | Pending |
+| MODE-04 | Phase 6 | Pending |
+| CTRL-01 | Phase 6 | Pending |
+| MODE-01 | Phase 7 | Pending |
+| FPLG-01 | Phase 7 | Pending |
+| FPLG-02 | Phase 7 | Pending |
+| FPLG-03 | Phase 7 | Pending |
+| CTRL-02 | Phase 7 | Pending |
+| VIZ-01 | Phase 8 | Pending |
+| VIZ-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 35 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 32 ⚠️ (resolved during roadmap creation)
+- Mapped to phases: 35 (100%) ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-16*
-*Last updated: 2026-06-16 after initial definition*
+*Last updated: 2026-06-16 after roadmap creation (8 phases)*

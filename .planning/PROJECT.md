@@ -97,6 +97,7 @@ See every device on your network and what it's doing, in real time — and be ab
 | Plugin UI via dedicated routes | Each plugin gets its own page at /plugins/[name]; no module federation or Svelte rebuild required to add/remove plugins | — Pending |
 | Plugin contract scope | Plugins can: add a UI page, subscribe to platform events, add API routes, register data collectors; they cannot replace core platform components | — Pending |
 | No plugin marketplace in v1 | Config-file + dashboard toggle is sufficient; hosted registry is a future business decision | — Pending |
+| OpenSpec + GSD dual-layer process | GSD manages macro level (phases, requirements, roadmap, verification); OpenSpec manages micro level (per-feature spec → Given/When/Then scenarios → tests → implementation). For each PLAN.md task: `/opsx:propose` first, write tests from scenarios (TDD), implement to pass tests, then `/opsx:sync` + `/opsx:archive`. Specs live in `openspec/` at project root. | — Pending |
 | ntfy.sh / Pushover for push notifications | Lightweight, self-hostable (ntfy.sh), no proprietary push infrastructure required | — Pending |
 | UniFi as first router integration target | User's planned router; strong API via aiounifi; large prosumer user base = most impactful first adapter | — Pending |
 
