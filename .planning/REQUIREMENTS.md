@@ -60,6 +60,12 @@
 - [ ] **FPLG-03**: Grafana integration plugin — exposes Innkeeper's PostgreSQL as a Grafana data source; provides a plugin page with a link to the Grafana instance; requires no custom Grafana plugin
 - [ ] **FPLG-04**: Notification plugin — delivers push alerts via ntfy.sh or Pushover; user configures the channel and topic in plugin settings; other plugins and the core platform send alerts through this plugin
 
+### Authentication (AUTH)
+
+- [ ] **AUTH-01**: A first-run setup wizard prompts the user to set a dashboard password before the UI is accessible
+- [ ] **AUTH-02**: User must authenticate with the dashboard password to access any page of the Innkeeper UI
+- [ ] **AUTH-03**: User session persists across browser refresh (JWT or session cookie) so the password is not required on every visit
+
 ### Platform (PLAT)
 
 - [ ] **PLAT-01**: User accesses Innkeeper via a web dashboard from any device on the home network without installing anything on that device
@@ -114,6 +120,7 @@
 | DHCP / DNS server (built-in) | Innkeeper reads from DHCP/DNS; it should not become the network's DHCP/DNS server — too much blast radius |
 | Multi-network simultaneous management | One active network profile at a time; multi-network is a v2+ architectural extension |
 | Module federation for plugin UI | Svelte compile-time constraint; dedicated routes are sufficient for v1 |
+| Multiple user accounts / RBAC | Single shared password is sufficient for v1 personal use; multi-user with role-based access is v2 |
 | Auto-quarantine / NAC | Network Access Control is complex, error-prone, and high blast radius; manual block is sufficient for v1 |
 
 ---
@@ -158,7 +165,7 @@
 | PLAT-03 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 32 total
+- v1 requirements: 35 total
 - Mapped to phases: 0 (roadmap pending)
 - Unmapped: 32 ⚠️ (resolved during roadmap creation)
 
