@@ -988,22 +988,22 @@ SELECT create_hypertable('bandwidth_metrics', by_range('time', INTERVAL '1 week'
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **API URL configuration mechanism**
    - What we know: `PUBLIC_API_URL` must be baked into the frontend Docker image at build time for adapter-static builds.
    - What's unclear: Should the user supply this as a build-arg in docker-compose.yml, or should there be a runtime mechanism (e.g., the frontend fetches `/api/config` before initializing)?
-   - Recommendation: For Phase 1 simplicity, bake it at build time via `args:` in docker-compose.yml. Document in `.env.example`. Revisit if live-reconfiguration is needed.
+   - Recommendation: RESOLVED: For Phase 1 simplicity, bake it at build time via `args:` in docker-compose.yml. Document in `.env.example`. Revisit if live-reconfiguration is needed. Implemented in 01-03-PLAN.md via the `PUBLIC_API_URL` build-arg.
 
 2. **Which TimescaleDB Docker image variant**
    - What we know: `timescale/timescaledb:latest-pg17` (Alpine-based, ~50MB compressed) vs `timescale/timescaledb-ha:pg17` (Ubuntu-based, ~300MB+ compressed, includes PostGIS/Patroni/Toolkit).
    - What's unclear: Does `-ha` provide any Phase 1 benefit? (Probably not — no PostGIS, no HA needed.)
-   - Recommendation: Use `timescale/timescaledb:latest-pg17` for Phase 1. Pin to `2.27.0-pg17` for reproducibility.
+   - Recommendation: RESOLVED: Use `timescale/timescaledb:latest-pg17` for Phase 1. Pin to `2.27.0-pg17` for reproducibility. Implemented in 01-02-PLAN.md, which pins `timescale/timescaledb:2.27.0-pg17`.
 
 3. **Frontend `+page.svelte` auth guard: `onMount` vs `load` function**
    - What we know: In SPA mode (ssr=false), `+page.ts load` functions run client-side. Either approach works.
    - What's unclear: Which is more idiomatic for SvelteKit 2 + Svelte 5 runes?
-   - Recommendation: Use `onMount` for Phase 1 simplicity; the load function approach is cleaner long-term but more complex.
+   - Recommendation: RESOLVED: Use `onMount` for Phase 1 simplicity; the load function approach is cleaner long-term but more complex. Implemented in 01-03-PLAN.md's auth guard tasks.
 
 ---
 
