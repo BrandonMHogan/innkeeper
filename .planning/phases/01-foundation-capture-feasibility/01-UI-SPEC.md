@@ -89,31 +89,35 @@ Note: Label (14px/500) and Body (14px/400) share the same size — they are dist
 
 Dark theme. All values are CSS custom properties (`--color-*`) on `:root`. Tailwind v4 tokens map to these.
 
-| Role | CSS Variable | Hex (dark default) | Usage |
-|------|-------------|-------------------|-------|
-| Dominant (60%) | `--color-background` | `#0f1117` | Page background, auth page backdrop |
-| Secondary (30%) | `--color-surface` | `#1a1d27` | Auth form card, future sidebar and nav |
-| Surface border | `--color-border` | `#2a2d3a` | Card outlines, input borders, dividers |
-| Accent (10%) | `--color-accent` | `#3b82f6` | Accent reserved-for list below |
-| Accent foreground | `--color-accent-fg` | `#ffffff` | Text on accent-colored buttons only |
-| Foreground | `--color-fg` | `#e2e8f0` | Primary body text, headings |
-| Muted | `--color-muted` | `#64748b` | Placeholder text, disabled labels, helper copy |
-| Destructive | `--color-destructive` | `#ef4444` | Destructive actions only (see below) |
-| Destructive foreground | `--color-destructive-fg` | `#ffffff` | Text on destructive buttons only |
+**Theme file contract:** All CSS custom properties below MUST be declared in a single dedicated file — `src/lib/styles/theme.css` — and imported once in the app root. No color values are hardcoded anywhere else; components reference only `var(--color-*)` tokens. Swapping the theme means replacing `theme.css` only.
 
-**Accent (`#3b82f6`, blue-500) is reserved exclusively for:**
+| Role | CSS Variable | Hex (dark default) | Tailwind equivalent | Usage |
+|------|-------------|-------------------|---------------------|-------|
+| Dominant (60%) | `--color-background` | `#0f172a` | slate-900 | Page background, auth page backdrop |
+| Secondary (30%) | `--color-surface` | `#1e293b` | slate-800 | Auth form card, future sidebar and nav |
+| Surface border | `--color-border` | `#334155` | slate-700 | Card outlines, input borders, dividers |
+| Accent (10%) | `--color-accent` | `#10b981` | emerald-500 | Accent reserved-for list below |
+| Accent foreground | `--color-accent-fg` | `#ffffff` | white | Text on accent-colored buttons only |
+| Foreground | `--color-fg` | `#f1f5f9` | slate-100 | Primary body text, headings |
+| Muted | `--color-muted` | `#64748b` | slate-500 | Placeholder text, disabled labels, helper copy |
+| Destructive | `--color-destructive` | `#ef4444` | red-500 | Destructive actions only (see below) |
+| Destructive foreground | `--color-destructive-fg` | `#ffffff` | white | Text on destructive buttons only |
+
+**Accent (`#10b981`, emerald-500) is reserved exclusively for:**
 - The primary submit button fill on `/setup` ("Set Password") and `/login` ("Sign In")
-- Future: active nav item indicator (Phase 2+)
-- Future: link text on error/info messages
+- Future: active nav item indicator and "online" device status dot (Phase 2+)
+- Future: link text on info messages
+
+**Submit button contrast note:** emerald-500 on white text yields ~2.4:1. The submit button background should use `#059669` (emerald-600) to achieve ~3.5:1 with white text — passing WCAG AA for UI components. Use emerald-500 for all non-button accent uses (status dots, nav indicators).
 
 **Accent is NOT used for:**
 - General interactive states (hover, focus)
 - Icons (icons use `--color-muted` or `--color-fg`)
 - Borders or dividers
 
-**Focus ring:** `--color-accent` at 50% opacity (`ring-blue-500/50`), 2px solid, 2px offset. Applied to all focusable elements for keyboard accessibility.
+**Focus ring:** `--color-accent` at 50% opacity (`ring-emerald-500/50`), 2px solid, 2px offset. Applied to all focusable elements for keyboard accessibility.
 
-**Input background:** `--color-background` (`#0f1117`) — slightly darker than the card surface to create depth.
+**Input background:** `--color-background` (`#0f172a`) — slightly darker than the card surface to create depth.
 
 ---
 
@@ -237,8 +241,8 @@ None. Phase 1 has no destructive actions (no delete, no reset). No confirmation 
 - All form fields have a `<label>` with explicit `for` / `id` binding — no `aria-label` substitutes on visible inputs
 - Error alerts are rendered in an `role="alert"` region so screen readers announce them immediately
 - Submit button communicates loading state via `aria-busy="true"` while the spinner is active
-- Color contrast: `--color-fg` (`#e2e8f0`) on `--color-surface` (`#1a1d27`) = 9.8:1 (WCAG AAA)
-- Color contrast: `--color-accent-fg` (`#ffffff`) on `--color-accent` (`#3b82f6`) = 3.0:1 (WCAG AA for large text / UI components)
+- Color contrast: `--color-fg` (`#f1f5f9`) on `--color-surface` (`#1e293b`) = 11.5:1 (WCAG AAA)
+- Color contrast: `--color-accent-fg` (`#ffffff`) on submit button background (`#059669`, emerald-600) = 3.5:1 (WCAG AA for UI components)
 - Minimum touch target for the submit button: full-width × 44px height
 - Tab order on `/setup`: password input → submit button
 - Tab order on `/login`: password input → submit button
