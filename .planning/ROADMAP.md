@@ -34,7 +34,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User must authenticate to view any page, and the session persists across browser refresh
   4. User can open the dashboard from any other device on the local network with nothing installed on that device
   5. A documented go/no-go decision and working spike prove the chosen capture topology can observe real ARP/broadcast LAN traffic; the capture engine runs with only CAP_NET_RAW + CAP_NET_ADMIN (never --privileged)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Backend foundation: settings, DB, models, Alembic/TimescaleDB migration, auth + capture-ingest routes with pytest coverage
+- [ ] 01-03-PLAN.md — SvelteKit frontend: scaffold, theme tokens, API client, /setup /login /dashboard pages per UI-SPEC
+- [ ] 01-02-PLAN.md — Capture service + docker-compose.yml topology; D-05 go/no-go ARP capture spike (human-verify checkpoint)
 
 ### Phase 2: Device Registry + Discovery
 **Goal**: A user can see every device on the network — automatically discovered with fused multi-source identity — register the ones they own with name/owner/type, and have unrecognized devices surface as unknown.
