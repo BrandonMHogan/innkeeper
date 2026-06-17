@@ -1,0 +1,37 @@
+[project]
+name = "innkeeper-backend"
+version = "0.1.0"
+description = "Innkeeper backend — FastAPI + SQLAlchemy async + TimescaleDB"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi==0.137.1",
+    "uvicorn[standard]==0.39.0",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.11.0",
+    "sqlalchemy==2.0.51",
+    "greenlet",
+    "asyncpg==0.31.0",
+    "alembic==1.16.5",
+    "itsdangerous==2.2.0",
+    "scapy==2.7.0",
+    "httpx",
+    "uvloop",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "aiosqlite",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
