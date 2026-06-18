@@ -14,7 +14,7 @@ Innkeeper delivers full visibility and control over a home network through a pri
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation + Capture Feasibility** - Deployable skeleton, password auth, and a go/no-go capture-topology spike resolving the macOS constraint (completed 2026-06-18)
-- [x] **Phase 2: Device Registry + Discovery** - Multi-source device discovery feeding a registry with named/owned devices and unknown-device detection (completed 2026-06-18)
+- [ ] **Phase 2: Device Registry + Discovery** - Multi-source device discovery feeding a registry with named/owned devices and unknown-device detection
 - [ ] **Phase 3: Live Traffic + Bandwidth** - SSE-powered live traffic feed and per-device + network-wide bandwidth history on TimescaleDB
 - [ ] **Phase 4: Security** - Per-device port scans, security status, and alerts for unknown devices and suspicious traffic
 - [ ] **Phase 5: Plugin System + Notifications** - Plugin contract, registry/settings UI, event bus, and the first-party notification plugin
@@ -175,7 +175,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
-| 2. Device Registry + Discovery | 3/3 | Complete   | 2026-06-18 |
+| 2. Device Registry + Discovery | 3/3 | In Progress|  |
 | 3. Live Traffic + Bandwidth | 0/TBD | Not started | - |
 | 4. Security | 0/TBD | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
