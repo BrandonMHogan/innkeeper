@@ -68,7 +68,7 @@
 
 ### Platform (PLAT)
 
-- [ ] **PLAT-01**: User accesses Innkeeper via a web dashboard from any device on the home network without installing anything on that device
+- [x] **PLAT-01**: User accesses Innkeeper via a web dashboard from any device on the home network without installing anything on that device
 - [ ] **PLAT-02**: The full Innkeeper stack (API, frontend, database, capture engine) is deployable via a single `docker compose up` command on any Docker-capable machine
 - [x] **PLAT-03**: The capture engine runs as a separate, isolated Docker service with only `CAP_NET_RAW` and `CAP_NET_ADMIN` capabilities — never `--privileged` — and can be replaced with a native host agent on macOS where Docker host networking is unavailable
 
@@ -131,7 +131,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAT-01 | Phase 1 | Pending |
+| PLAT-01 | Phase 1 | Complete |
 | PLAT-02 | Phase 1 | Pending |
 | PLAT-03 | Phase 1 | Complete |
 | AUTH-01 | Phase 1 | Complete |

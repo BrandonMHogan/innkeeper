@@ -43,7 +43,7 @@ Plans:
 **Wave 1**
 
 - [x] 01-01-PLAN.md — Backend foundation: settings, DB, models, Alembic/TimescaleDB migration, auth + capture-ingest routes with pytest coverage
-- [ ] 01-03-PLAN.md — SvelteKit frontend: scaffold, theme tokens, API client, /setup /login /dashboard pages per UI-SPEC
+- [x] 01-03-PLAN.md — SvelteKit frontend: scaffold, theme tokens, API client, /setup /login /dashboard pages per UI-SPEC
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation + Capture Feasibility | 1/3 | In Progress|  |
+| 1. Foundation + Capture Feasibility | 2/3 | In Progress|  |
 | 2. Device Registry + Discovery | 0/TBD | Not started | - |
 | 3. Live Traffic + Bandwidth | 0/TBD | Not started | - |
 | 4. Security | 0/TBD | Not started | - |
