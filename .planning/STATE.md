@@ -94,6 +94,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260618-bmk | Add a scripted Lima VM dev environment so the Phase 1 docker-compose stack can be verified on a real Linux network namespace from any Mac | 2026-06-18 | fefb67c | [260618-bmk-add-a-scripted-lima-vm-dev-environment-s](./quick/260618-bmk-add-a-scripted-lima-vm-dev-environment-s/) |
+| 260618-coa | Fix cross-origin session-cookie bug (SameSite=Lax + cross-port frontend/API) via same-origin nginx proxy; also fixed the underlying api.ts fallback that defeated it | 2026-06-18 | 455e8d4 | [260618-coa-fix-cross-origin-session-cookie-bug-fron](./quick/260618-coa-fix-cross-origin-session-cookie-bug-fron/) |
 
 ## Deferred Items
 
