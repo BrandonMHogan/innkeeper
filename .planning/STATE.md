@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-06-18T00:42:11.265Z"
-last_activity: 2026-06-18 -- Plan 01-03 (frontend foundation) complete, npm run build green
+stopped_at: Completed 01-02-PLAN.md — Phase 01 complete
+last_updated: "2026-06-18T13:50:00.000Z"
+last_activity: 2026-06-18 -- Phase 01 complete. D-05 go/no-go gate PASS (real ARP packet captured end-to-end on a bridged-LAN Lima VM)
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: 01 (foundation-capture-feasibility) — EXECUTING
-Plan: 3 of 3 (01-02 capture+compose still pending; 01-03 executed out of order, no dependency conflict per plan frontmatter)
-Status: Executing Phase 01 — 01-01 and 01-03 complete, 01-02 remaining
-Last activity: 2026-06-18 -- Plan 01-03 (frontend foundation) complete, npm run build green, all UI-SPEC copy/acceptance checks pass
+Phase: 01 (foundation-capture-feasibility) — COMPLETE
+Plan: 3 of 3 — all complete
+Status: Phase 01 complete. D-05 go/no-go gate PASS — real LAN ARP packet captured end-to-end (capture → API → PostgreSQL) on a bridged-network Lima VM, with full browser-based UAT (setup → login → dashboard) confirmed working.
+Last activity: 2026-06-18 -- Phase 01 complete
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 67%
 |-------|------|----------|-------|-------|
 | 01 | 01 | 35min | 2 | 20 |
 | 01 | 03 | 12min | 2 | 16 |
+| 01 | 02 | ~3h (incl. live debugging) | 2 | 5 |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 1]: Settings.model_config uses env_file=None — config is injected entirely via Docker Compose's env_file: directive
 - [Phase 1]: Added frontend/.gitignore (node_modules, build/, .svelte-kit) — required for any Node project, not explicitly listed in plan files_modified
 - [Phase 1]: svelte:head must be a top-level element, not nested inside an {#if} block — moved dashboard's title tag outside the auth-gated conditional
+- [Phase 1]: Frontend and API must be same-origin (nginx reverse-proxies /api/) — cross-port + CORS breaks SameSite=Lax session cookies on every fetch()-based client, invisible to unit tests
+- [Phase 1]: Capture's loopback-only ingest check must trust the runtime-detected Docker bridge gateway (via /proc/net/route), not just literal 127.0.0.1 — Docker hairpin NAT rewrites the source IP for any container using network_mode: host talking to a bridge-networked service via the host's published port
+- [Phase 1]: macOS local dev requires a bridged-network Lima VM (Docker Desktop's NAT isolation can't see real LAN traffic) — Mac-only tooling, irrelevant to the real Linux deployment target; see docs/dev/mac_setup.md
 
 ### Pending Todos
 
@@ -85,7 +89,6 @@ None yet.
 
 [Issues that affect future work]
 
-- [Phase 1]: macOS/Docker capture is a HARD GATE. Docker Desktop on macOS silently ignores `network_mode: host`; the spike must prove the chosen topology sees real LAN ARP/broadcast traffic before downstream phases are safe.
 - [Phase 1/3]: TimescaleDB schema (hypertable vs config separation, chunk sizing, downsample-not-delete policy) is expensive to change later — settle during early planning.
 - [Phase 2]: MAC-randomization identity model — how aggressively to dedupe rotating MACs is non-trivial and central.
 
@@ -107,6 +110,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-18T00:42:11.265Z
-Stopped at: Completed 01-03-PLAN.md; quick task 260618-bmk (Lima VM dev environment) complete
-Resume file: 01-02-PLAN.md (capture + compose — Task 1 committed, awaiting human-verify checkpoint on a real Linux host or the new Lima VM)
+Last session: 2026-06-18T13:50:00.000Z
+Stopped at: Phase 01 complete — all 3 plans done, D-05 go/no-go gate PASS
+Resume file: none — ready to plan Phase 02
