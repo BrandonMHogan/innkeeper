@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from src.routes import auth, capture
+from src.routes import auth, capture, devices
 from src.settings import get_settings
 
 
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth.router, prefix="/api/auth")
     app.include_router(capture.router, prefix="/api/capture")
+    app.include_router(devices.router, prefix="/api/devices")
 
     return app
 

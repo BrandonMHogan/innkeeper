@@ -1,4 +1,5 @@
 import socket
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
@@ -6,6 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.models.arp_event import ArpEvent
+from src.models.dhcp_event import DhcpEvent
+from src.models.mdns_event import MdnsEvent
+from src.services.discovery import record_observation
+from src.services.identity_resolver import Observation
 
 router = APIRouter()
 
@@ -53,6 +58,19 @@ class ArpEventPayload(BaseModel):
     dst_ip: str
 
 
+class DhcpEventPayload(BaseModel):
+    src_mac: str
+    hostname: str | None = None
+    requested_ip: str | None = None
+    vendor_class_id: str | None = None
+
+
+class MdnsEventPayload(BaseModel):
+    hostname: str | None = None
+    addresses: str
+    service_type: str
+
+
 @router.post("/arp", status_code=status.HTTP_201_CREATED)
 async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
     """Capture ingest — loopback-only. Capture never writes directly to the DB."""
@@ -63,4 +81,64 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
     event = ArpEvent(src_mac=payload.src_mac, src_ip=payload.src_ip, dst_ip=payload.dst_ip)
     db.add(event)
     await db.commit()
+
+    await record_observation(
+        db,
+        Observation(mac=payload.src_mac, hostname=None, source="arp", observed_at=datetime.utcnow()),
+    )
+    return {"ok": True}
+
+
+@router.post("/dhcp", status_code=status.HTTP_201_CREATED)
+async def ingest_dhcp(payload: DhcpEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Capture never writes directly to the DB."""
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    event = DhcpEvent(
+        src_mac=payload.src_mac,
+        hostname=payload.hostname,
+        requested_ip=payload.requested_ip,
+        vendor_class_id=payload.vendor_class_id,
+    )
+    db.add(event)
+    await db.commit()
+
+    await record_observation(
+        db,
+        Observation(mac=payload.src_mac, hostname=payload.hostname, source="dhcp", observed_at=datetime.utcnow()),
+    )
+    return {"ok": True}
+
+
+@router.post("/mdns", status_code=status.HTTP_201_CREATED)
+async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Capture never writes directly to the DB."""
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    event = MdnsEvent(
+        hostname=payload.hostname,
+        service_type=payload.service_type,
+        addresses=payload.addresses,
+    )
+    db.add(event)
+    await db.commit()
+
+    # mDNS browsing alone yields no MAC address — use a placeholder so the
+    # observation still resolves a hostname-keyed identity (D-02). ARP/DHCP
+    # observations for the same physical device will independently resolve
+    # the real MAC-keyed or hostname-keyed identity; this is a known Phase 2
+    # limitation (mDNS contributes hostname enrichment, not MAC linkage).
+    await record_observation(
+        db,
+        Observation(
+            mac="00:00:00:00:00:00",
+            hostname=payload.hostname,
+            source="mdns",
+            observed_at=datetime.utcnow(),
+        ),
+    )
     return {"ok": True}

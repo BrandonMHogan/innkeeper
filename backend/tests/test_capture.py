@@ -15,6 +15,41 @@ async def test_arp_ingest(client):
     assert response.status_code == 201
 
 
+async def test_dhcp_ingest(client, test_db):
+    """POST /api/capture/dhcp from loopback succeeds and creates a fused identity."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from src.models.discovered_identity import DiscoveredIdentity
+
+    payload = {
+        "src_mac": "aa:bb:cc:dd:ee:ff",
+        "hostname": "my-laptop",
+        "requested_ip": "192.168.1.50",
+        "vendor_class_id": None,
+    }
+    response = await client.post("/api/capture/dhcp", json=payload)
+    assert response.status_code == 201
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].identity_key == "host:my-laptop"
+
+
+async def test_mdns_ingest(client):
+    """POST /api/capture/mdns from loopback succeeds."""
+    payload = {
+        "hostname": "iphone.local",
+        "addresses": "192.168.1.60",
+        "service_type": "_airplay._tcp.local.",
+    }
+    response = await client.post("/api/capture/mdns", json=payload)
+    assert response.status_code == 201
+
+
 async def test_arp_ingest_rejects_non_loopback(test_db):
     """POST /api/capture/arp from a non-loopback peer address returns 403.
 
