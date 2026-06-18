@@ -62,15 +62,15 @@
 
 ### Authentication (AUTH)
 
-- [ ] **AUTH-01**: A first-run setup wizard prompts the user to set a dashboard password before the UI is accessible
-- [ ] **AUTH-02**: User must authenticate with the dashboard password to access any page of the Innkeeper UI
-- [ ] **AUTH-03**: User session persists across browser refresh (JWT or session cookie) so the password is not required on every visit
+- [x] **AUTH-01**: A first-run setup wizard prompts the user to set a dashboard password before the UI is accessible
+- [x] **AUTH-02**: User must authenticate with the dashboard password to access any page of the Innkeeper UI
+- [x] **AUTH-03**: User session persists across browser refresh (JWT or session cookie) so the password is not required on every visit
 
 ### Platform (PLAT)
 
 - [ ] **PLAT-01**: User accesses Innkeeper via a web dashboard from any device on the home network without installing anything on that device
 - [ ] **PLAT-02**: The full Innkeeper stack (API, frontend, database, capture engine) is deployable via a single `docker compose up` command on any Docker-capable machine
-- [ ] **PLAT-03**: The capture engine runs as a separate, isolated Docker service with only `CAP_NET_RAW` and `CAP_NET_ADMIN` capabilities — never `--privileged` — and can be replaced with a native host agent on macOS where Docker host networking is unavailable
+- [x] **PLAT-03**: The capture engine runs as a separate, isolated Docker service with only `CAP_NET_RAW` and `CAP_NET_ADMIN` capabilities — never `--privileged` — and can be replaced with a native host agent on macOS where Docker host networking is unavailable
 
 ---
 
@@ -133,10 +133,10 @@
 |-------------|-------|--------|
 | PLAT-01 | Phase 1 | Pending |
 | PLAT-02 | Phase 1 | Pending |
-| PLAT-03 | Phase 1 | Pending |
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Complete |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
 | DISC-01 | Phase 2 | Pending |
 | DISC-02 | Phase 2 | Pending |
 | DISC-03 | Phase 2 | Pending |
@@ -168,6 +168,7 @@
 | VIZ-02 | Phase 8 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 35 total
 - Mapped to phases: 35 (100%) ✓
 - Unmapped: 0 ✓
