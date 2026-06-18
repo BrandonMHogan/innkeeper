@@ -22,7 +22,7 @@ INSTANCE="innkeeper"
 # Must match `mounts: mountPoint` in lima/innkeeper.yaml — kept as a single
 # variable here so it only needs updating in one place if the mount point
 # in the Lima YAML changes.
-REPO_MOUNT="/home/{{.User}}.linux/innkeeper"
+REPO_MOUNT="/innkeeper"
 
 usage() {
   cat >&2 <<EOF
