@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
+status: executing
 stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-06-18T19:39:14.457Z"
+last_updated: "2026-06-18T20:30:27.038Z"
 last_activity: 2026-06-18 -- Phase 02 execution started
 progress:
   total_phases: 8
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: 02 (device-registry-discovery) — EXECUTING
 Plan: 3 of 3
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-06-18 -- Phase 02 execution started
 
 Progress: [██████████] 100%
@@ -120,3 +120,13 @@ Items acknowledged and carried forward from previous milestone close:
 Last session: 2026-06-18T19:39:10.262Z
 Stopped at: Completed 02-03-PLAN.md
 Resume file: 
+
+## Decision Coverage Override (Phase 02 gap closure, 2026-06-18)
+
+D-11 and D-12 (CONTEXT.md, Device List & Unknown-Device UX category) were flagged
+by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
+Both features are already implemented and independently verified per
+02-VERIFICATION.md's Required Artifacts table (RegisterDialog.svelte inline form,
+DeviceCard.svelte name/type icon/last-seen/status dot fields) — this is a citation
+gap in the already-executed 02-01/02/03 plans predating the 02-04 gap-closure plan,
+not a missing feature. Overridden — proceeding without replanning shipped UI work.
