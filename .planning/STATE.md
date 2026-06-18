@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-06-18T18:58:15.911Z"
+last_updated: "2026-06-18T19:33:33.935Z"
 last_activity: 2026-06-18 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 13
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 ## Current Position
 
 Phase: 02 (device-registry-discovery) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-18 -- Phase 02 execution started
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | 01 | 03 | 12min | 2 | 16 |
 | 01 | 02 | ~3h (incl. live debugging) | 2 | 5 |
 | Phase 02 P01 | 25min | 2 tasks | 15 files |
+| Phase 02 P02 | 12min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,7 @@ Recent decisions affecting current work:
 - [Phase 1]: macOS local dev requires a bridged-network Lima VM (Docker Desktop's NAT isolation can't see real LAN traffic) — Mac-only tooling, irrelevant to the real Linux deployment target; see docs/dev/mac_setup.md
 - [Phase ?]: Phase 2: mDNS observations use placeholder MAC 00:00:00:00:00:00 since mDNS alone carries no MAC; documented as known limitation, ARP/DHCP independently resolve real identity
 - [Phase ?]: Phase 2: used a throwaway /tmp venv with Python 3.13 (homebrew) to run pytest since project requires >=3.13 and no project venv existed yet
+- [Phase ?]: Pinned zeroconf==0.148.0 (not 0.149.16) — live pip index confirmed 0.148.0 as latest actually-published version; package identity already verified
 
 ### Pending Todos
 
@@ -113,6 +115,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-18T18:58:15.907Z
+Last session: 2026-06-18T19:33:30.231Z
 Stopped at: Completed 02-01-PLAN.md
 Resume file: None
