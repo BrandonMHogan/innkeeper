@@ -50,11 +50,10 @@ def upgrade() -> None:
 
     # Declare the index TimescaleDB auto-creates on the time column so Alembic
     # autogenerate doesn't try to drop it on a later migration (Pitfall 2).
-    op.create_index(
-        "bandwidth_metrics_time_idx",
-        "bandwidth_metrics",
-        ["time"],
-        unique=False,
+    # IF NOT EXISTS because create_hypertable() above already created this
+    # exact index — op.create_index() would error with DuplicateTableError.
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS bandwidth_metrics_time_idx ON bandwidth_metrics (time)"
     )
 
 
