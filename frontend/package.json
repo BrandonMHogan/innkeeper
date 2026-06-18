@@ -1,0 +1,27 @@
+{
+  "name": "innkeeper-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "3.0.10",
+    "@sveltejs/kit": "^2.65.2",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "svelte": "^5.56.3",
+    "svelte-check": "^4.0.0",
+    "tailwindcss": "4.3.1",
+    "@tailwindcss/vite": "4.3.1",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@lucide/svelte": "1.20.0",
+    "bits-ui": "2.18.1",
+    "@fontsource/inter": "5.2.8"
+  }
+}
