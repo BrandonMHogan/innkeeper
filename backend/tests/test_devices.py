@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -123,3 +124,38 @@ async def test_unknown_device_listed(client, test_db):
 async def test_devices_requires_auth(client):
     response = await client.get("/api/devices/")
     assert response.status_code == 401
+
+
+async def test_list_devices_canonical_path_no_redirect(client, test_db):
+    """GET /api/devices/ (canonical, trailing slash) returns 200 with no
+    redirect; GET /api/devices (no trailing slash, the old broken frontend
+    literal) still returns 307 to the exact canonical Location (CR-02)."""
+    from src.database import get_db
+    from src.main import app
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+
+    async def override_get_db():
+        async with session_maker() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport, base_url="http://test", follow_redirects=False
+        ) as raw_client:
+            await raw_client.post("/api/auth/setup", json={"password": "correct-password"})
+            login_response = await raw_client.post(
+                "/api/auth/login", json={"password": "correct-password"}
+            )
+            assert login_response.status_code == 200
+
+            canonical_response = await raw_client.get("/api/devices/")
+            assert canonical_response.status_code == 200
+
+            redirect_response = await raw_client.get("/api/devices")
+            assert redirect_response.status_code == 307
+            assert redirect_response.headers["location"] == "http://test/api/devices/"
+    finally:
+        app.dependency_overrides.clear()
