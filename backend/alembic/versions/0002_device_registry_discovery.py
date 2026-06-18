@@ -68,7 +68,7 @@ def upgrade() -> None:
         sa.Column("owner", sa.String(100), nullable=False, server_default=""),
         sa.Column("type", sa.Enum(*_DEVICE_TYPE_VALUES, name="devicetype"), nullable=False),
         sa.Column("trusted", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("last_known_mac", sa.String(17), nullable=False),
+        sa.Column("last_known_mac", sa.String(17), nullable=True),
         sa.Column("first_seen", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column("last_seen", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),

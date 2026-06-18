@@ -7,6 +7,7 @@ from src.auth import require_auth
 from src.database import get_db
 from src.models.device import Device, DeviceType
 from src.models.discovered_identity import DiscoveredIdentity
+from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC
 
 router = APIRouter()
 
@@ -74,7 +75,7 @@ async def register_device(
         owner=payload.owner,
         type=payload.type,
         trusted=payload.trusted,
-        last_known_mac=identity.mac,
+        last_known_mac=None if identity.mac == MDNS_PLACEHOLDER_MAC else identity.mac,
         first_seen=identity.first_seen,
         last_seen=identity.last_seen,
     )
@@ -101,7 +102,8 @@ async def merge_device(
     if device is None:
         raise HTTPException(status_code=404, detail="Target device not found")
 
-    device.last_known_mac = identity.mac
+    if identity.mac != MDNS_PLACEHOLDER_MAC:
+        device.last_known_mac = identity.mac
     device.last_seen = max(identity.last_seen, device.last_seen)
     await db.delete(identity)
     await db.commit()

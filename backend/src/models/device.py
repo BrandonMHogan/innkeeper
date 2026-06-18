@@ -32,6 +32,6 @@ class Device(Base):
     owner: Mapped[str] = mapped_column(String(100), nullable=False, default="")
     type: Mapped[DeviceType] = mapped_column(SAEnum(DeviceType), nullable=False)
     trusted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    last_known_mac: Mapped[str] = mapped_column(String(17), nullable=False)
+    last_known_mac: Mapped[str | None] = mapped_column(String(17), nullable=True)
     first_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
     last_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
