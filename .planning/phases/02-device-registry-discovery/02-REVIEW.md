@@ -2,91 +2,68 @@
 phase: 02-device-registry-discovery
 reviewed: 2026-06-18T00:00:00Z
 depth: standard
-files_reviewed: 4
+files_reviewed: 8
 files_reviewed_list:
+  - backend/src/services/identity_resolver.py
+  - backend/src/services/discovery.py
   - backend/src/routes/capture.py
-  - backend/tests/test_capture.py
-  - frontend/src/lib/api.ts
+  - backend/src/routes/devices.py
+  - backend/src/models/device.py
+  - backend/alembic/versions/0002_device_registry_discovery.py
+  - backend/tests/test_discovery.py
   - backend/tests/test_devices.py
 findings:
-  critical: 1
+  critical: 0
   warning: 2
   info: 1
-  total: 4
+  total: 3
 status: issues_found
 ---
 
-# Phase 02: Code Review Report (gap-closure re-review, plan 02-04)
+# Phase 02: Code Review Report (gap-closure re-review, plan 02-05)
 
 **Reviewed:** 2026-06-18
 **Depth:** standard
-**Files Reviewed:** 4
+**Files Reviewed:** 8
 **Status:** issues_found
 
 ## Summary
 
-This re-review targets the gap-closure changes from plan 02-04, which addressed two previously-documented defects: CR-01 (mDNS placeholder-MAC over-fusion of distinct hostname-less devices) and CR-02 (frontend/backend trailing-slash path mismatch on `/api/devices`).
+This re-review targets plan 02-05, which fixed CR-05 — the shared mDNS placeholder MAC (`00:00:00:00:00:00`) hijacking a registered device's identity once that device's `Device.last_known_mac` had ever been set to the placeholder. The fix has three parts: (1) hoist the constant to `identity_resolver.py` as `MDNS_PLACEHOLDER_MAC`, the single shared definition; (2) exclude placeholder-MAC observations from `discovery.py`'s `record_observation` Device-branch lookup, routing them to the hostname-keyed `DiscoveredIdentity` upsert instead; (3) guard `register_device`/`merge_device` in `devices.py` so the placeholder is never written into `Device.last_known_mac`, which required making the column nullable (model + in-place edit of the still-unreleased migration `0002`).
 
-**Both CR-01 and CR-02 are confirmed resolved.**
+**CR-05 is confirmed resolved.** I traced every path that writes or reads `Device.last_known_mac` and every path that resolves an observation's identity, and found no remaining route by which the placeholder can match or overwrite an unrelated registered `Device`:
 
-- **CR-01 (resolved):** `backend/src/routes/capture.py:139-140` now returns early with `{"ok": True, "skipped": "no identity signal"}` whenever `payload.hostname` is `None` or blank, before `record_observation` is ever called. The placeholder MAC `00:00:00:00:00:00` (now named `_MDNS_PLACEHOLDER_MAC`) is only used for hostname-bearing mDNS events, where the resolver's primary hostname-keying path (`HostnameFallbackResolver.resolve`) takes over and the placeholder MAC is irrelevant to key derivation. `test_mdns_ingest_without_hostname_does_not_collide` directly reproduces the original bug scenario (two distinct hostname-less mDNS observations) and asserts zero `DiscoveredIdentity` rows are created, and `test_mdns_ingest_with_hostname_still_resolves_identity` proves the legitimate fusion path still works. Both tests pass per the diff and exercise the exact code path that previously collapsed unrelated devices.
+- `discovery.py:90-98` — placeholder-MAC observations now return immediately via `upsert_discovered_identity` (hostname-keyed `DiscoveredIdentity` upsert) and never reach the `select(Device).where(Device.last_known_mac == observation.mac)` lookup at line 100. Since `MDNS_PLACEHOLDER_MAC` is excluded up front, even a `Device` row that still has `last_known_mac == MDNS_PLACEHOLDER_MAC` (e.g., one registered before this fix shipped, or via a pre-fix data state) can no longer be matched by a subsequent placeholder-MAC observation — the lookup is skipped entirely for that MAC value, not just newly-prevented from being set.
+- `devices.py:78` — `register_device` sets `last_known_mac=None if identity.mac == MDNS_PLACEHOLDER_MAC else identity.mac`, so a newly registered mDNS-only identity gets `last_known_mac=None`, not the placeholder.
+- `devices.py:105-106` — `merge_device` only overwrites `device.last_known_mac` when `identity.mac != MDNS_PLACEHOLDER_MAC`, so merging a placeholder-MAC identity into an existing device leaves that device's real MAC untouched (and never sets it to the placeholder either).
+- The nullable schema change (`Device.last_known_mac: str | None`, migration column `nullable=True`) is required for `register_device` to legally persist `None`, and is consistent end-to-end: model, migration, and the one INSERT path that uses it.
+- Test coverage directly proves the closed loophole: `test_placeholder_mac_observation_does_not_hijack_registered_device` (`test_discovery.py:83-115`) seeds a registered `Device` with `last_known_mac=MDNS_PLACEHOLDER_MAC` (simulating a device that slipped through pre-fix, or any future regression) and asserts a second, unrelated mDNS observation does not rename it — this is the exact CR-05 reproduction scenario from the prior review's `Fix` recommendation. `test_register_device_with_placeholder_mac_does_not_persist_placeholder` and `test_merge_device_with_placeholder_mac_does_not_overwrite_last_known_mac` (`test_devices.py:114-158`) cover the two write paths.
 
-- **CR-02 (resolved):** `frontend/src/lib/api.ts:21,33` now call `/api/devices/` (trailing slash) for both `listDevices()` and `registerDevice()`, matching the backend's canonical mount point. `test_list_devices_canonical_path_no_redirect` in `test_devices.py` proves the canonical path returns `200` with no redirect, while the old broken literal (`/api/devices`, no slash) still 307-redirects — confirming the frontend now hits the canonical path directly rather than relying on a redirect round-trip.
+CR-01 and CR-02 (resolved in earlier gap-closure passes, not touched by this diff) remain resolved — nothing in this diff reintroduces the original hostname-less mDNS collision or the trailing-slash mismatch.
 
-However, the CR-01 fix exposes a new cross-device data-corruption path that was previously masked by the bug it fixed (see CR-05 below), and a couple of smaller robustness/quality issues remain in the changed files.
-
-## Critical Issues
-
-### CR-05: Shared mDNS placeholder MAC still causes cross-device `identity_key` hijacking once any mDNS-derived identity is registered or merged
-
-**File:** `backend/src/routes/capture.py:139-151`, `backend/src/services/discovery.py:79-87`, `backend/src/routes/devices.py:71-77,104`
-**Issue:** The CR-01 fix correctly stops *hostname-less* mDNS observations from reaching `record_observation`, but every surviving (hostname-bearing) mDNS observation still calls `record_observation` with `mac=_MDNS_PLACEHOLDER_MAC` ("00:00:00:00:00:00") — by design, since mDNS browsing yields no real MAC. This is fine in isolation because `HostnameFallbackResolver.resolve()` keys hostname-bearing observations by hostname, not MAC.
-
-The problem appears later: if a user registers (`POST /api/devices/`) or merges (`POST /api/devices/{id}/merge`) a `DiscoveredIdentity` that originated from an mDNS-only observation, `identity.mac` is the placeholder, and `register_device`/`merge_device` copy it verbatim into `Device.last_known_mac` (`devices.py:77` and `devices.py:104`). That `Device` row now permanently has `last_known_mac = "00:00:00:00:00:00"`.
-
-From that point on, `record_observation`'s Device-branch fast path (`discovery.py:79`: `select(Device).where(Device.last_known_mac == observation.mac)`) matches **any** subsequent mDNS observation for **any other device**, because every hostname-bearing mDNS observation still carries the same placeholder MAC. The match is found regardless of whether the new observation's hostname has anything to do with the registered device, and the code unconditionally overwrites `device.identity_key`, `device.last_known_mac`, and `device.last_seen` (`discovery.py:82-86`) — silently renaming/corrupting an unrelated registered device's identity based on a completely different physical device's mDNS broadcast. This is a wider blast radius than the original CR-01 bug: instead of two unknown identities colliding, a single registered (named, owned, trusted) device can be silently hijacked by any other device on the network announcing itself over mDNS.
-**Fix:** Exclude the placeholder MAC from the Device-branch lookup entirely, since it is never a real, device-specific MAC:
-```python
-async def record_observation(db, observation, resolver=None):
-    resolver = resolver or HostnameFallbackResolver()
-    identity_key = resolver.resolve(observation)
-
-    if observation.mac == _MDNS_PLACEHOLDER_MAC:
-        # Placeholder MAC is shared across all hostname-bearing mDNS
-        # observations and must never be used to match an existing Device
-        # by last_known_mac — fall through to the hostname-keyed upsert path.
-        await upsert_discovered_identity(
-            db, identity_key=identity_key, mac=observation.mac,
-            hostname=observation.hostname, seen_at=observation.observed_at,
-        )
-        return
-
-    result = await db.execute(select(Device).where(Device.last_known_mac == observation.mac))
-    ...
-```
-(Import or pass `_MDNS_PLACEHOLDER_MAC` from `capture.py`, or better, hoist the constant to a shared module like `identity_resolver.py` so `discovery.py` doesn't need to import from a route module.) Additionally, `register_device`/`merge_device` should refuse to set `Device.last_known_mac` to the placeholder value in the first place — e.g., leave the device's existing `last_known_mac` unchanged (or null/sentinel it explicitly) when `identity.mac == _MDNS_PLACEHOLDER_MAC`, since a placeholder is not a real "last known MAC" for that device. Add a regression test: register an mDNS-only identity into a Device, then post a second, unrelated mDNS observation with a different hostname, and assert the first Device's `identity_key`/`name` are unaffected.
+Two warnings and one informational item remain; none block this fix, but one warning is new (the in-place migration edit) and is worth flagging given the project's general migration-immutability norms even though it's justified here by the migration being unreleased.
 
 ## Warnings
 
 ### WR-08: `test_arp_ingest_accepts_detected_gateway` monkeypatches the wrong abstraction layer, masking a real-world gap in gateway-trust testing
 
-**File:** `backend/tests/test_capture.py:143-177`
-**Issue:** This test monkeypatches `capture_module._TRUSTED_HOSTS` directly to inject a fake gateway IP, rather than exercising `_detect_default_gateway()` + the module-level `_TRUSTED_HOSTS` computation that actually runs at import time in production. This proves the membership-check `if client_host not in _TRUSTED_HOSTS` works, which is useful, but it provides no coverage at all for whether `_detect_default_gateway()` correctly parses a real `/proc/net/route`-shaped file and produces the expected dotted-quad IP (the only test for that function, `test_detect_default_gateway_fails_safe_on_bad_path`, only checks the failure path with a nonexistent file). A bug in the hex-to-IP conversion logic (e.g., wrong byte order) would not be caught by either test.
-**Fix:** Add a test that writes a synthetic `/proc/net/route`-formatted file (with a known gateway hex value) to a temp path, points `_PROC_NET_ROUTE_PATH` at it via monkeypatch, and asserts `_detect_default_gateway()` returns the expected dotted-quad IP — exercising the real parsing logic end-to-end instead of only the membership-check consumer.
+**File:** `backend/tests/test_capture.py:143-177` (not in this diff's file set, carried forward — unchanged since prior review)
+**Issue:** This test monkeypatches `capture_module._TRUSTED_HOSTS` directly to inject a fake gateway IP, rather than exercising `_detect_default_gateway()` + the module-level `_TRUSTED_HOSTS` computation that actually runs at import time in production. The only test that exercises `_detect_default_gateway()` itself, `test_detect_default_gateway_fails_safe_on_bad_path`, only checks the failure path with a nonexistent file. A bug in the hex-to-IP byte-order conversion in `capture.py:42` would not be caught by either test.
+**Fix:** Add a test that writes a synthetic `/proc/net/route`-formatted file (with a known gateway hex value) to a temp path, points `_PROC_NET_ROUTE_PATH` at it via monkeypatch, and asserts `_detect_default_gateway()` returns the expected dotted-quad IP.
 
-### WR-09: `ingest_mdns`'s early-return skip path produces no audit signal beyond the response body
+### WR-09: In-place migration edit to make `last_known_mac` nullable relies entirely on the migration being unreleased — no test guards against this assumption breaking
 
-**File:** `backend/src/routes/capture.py:139-140`
-**Issue:** When an mDNS event is skipped for lack of identity signal, the function returns `{"ok": True, "skipped": "no identity signal"}` with no server-side logging. Since capture-sidecar responses aren't inspected by anything except (optionally) the sidecar's own log line on non-2xx, operators have no way to see how often mDNS events are being skipped (e.g., to gauge whether most devices on their LAN advertise mDNS without a hostname, which would be useful operational visibility into discovery effectiveness). This is a minor observability gap, not a correctness bug.
-**Fix:** Add a debug-level log line (e.g., `logger.debug("mdns event skipped: no hostname", extra={"service_type": payload.service_type})`) alongside the early return.
+**File:** `backend/alembic/versions/0002_device_registry_discovery.py:71`
+**Issue:** This gap-closure plan edited `0002_device_registry_discovery.py` in place (`nullable=False` to `nullable=True` on `last_known_mac`, both in the migration and in `src/models/device.py`) rather than adding a new revision. This is the correct move only because `0002` has never shipped to a real deployment — editing an already-applied migration in place would silently desync any environment that already ran the old version (its `devices.last_known_mac` column would still be `NOT NULL` in the actual database, while the model and any fresh `alembic upgrade head` elsewhere would assume nullable, causing an `IntegrityError` the first time `register_device` tries to insert `last_known_mac=None`). There is no test or migration-state check anywhere in the suite that would catch a future regression of this kind (e.g., someone editing `0002` in place again after it has shipped), and nothing in the codebase documents "0002 is unreleased, in-place edits are safe until release X" as an explicit, enforced rule — it's tribal knowledge captured only in the plan/commit description, not in the migration file itself.
+**Fix:** Add a one-line comment in the migration header noting the in-place-edit history and the cutoff (e.g., "edited in place 2026-06-18 to relax last_known_mac to nullable — safe only because this revision is unreleased; once released, future changes to this column MUST use a new revision"). Optionally, add a CI guard (e.g., a pre-commit/CI check that diffs already-tagged-as-released migration files against a frozen snapshot) if this project anticipates more pre-release gap-closure cycles that touch migrations.
 
 ## Info
 
-### IN-05: `_MDNS_PLACEHOLDER_MAC` constant is now named but its single remaining consumer (`record_observation`'s Device-branch) still needs the literal re-derived independently in `discovery.py`
+### IN-06: `Device.last_known_mac` is now nullable for every device, not just mDNS-only ones, slightly widening the column's "unknown state" surface
 
-**File:** `backend/src/routes/capture.py:18`, `backend/src/services/discovery.py` (no reference)
-**Issue:** The CR-01 fix correctly extracted `_MDNS_PLACEHOLDER_MAC` as a named constant in `capture.py`, addressing the old IN-02 finding. However, the fix for CR-05 above (if implemented) would need this same sentinel value inside `discovery.py`, which currently has no knowledge of "this MAC is a placeholder, not a real device fingerprint." Keeping the constant defined only in the route module creates a layering smell: a service module (`discovery.py`) would need to import a sentinel from a route module, or the value would have to be duplicated. This is purely a heads-up for whoever fixes CR-05, not a standalone defect in the currently-reviewed files.
-**Fix:** When addressing CR-05, move `_MDNS_PLACEHOLDER_MAC` to a shared location (e.g., `identity_resolver.py`, which already owns MAC/hostname-keying concerns) so both `capture.py` and `discovery.py` can import the same constant.
+**File:** `backend/src/models/device.py:35`
+**Issue:** The nullability fix is correct and minimal, but it has the side effect of making `last_known_mac` nullable for *every* `Device` row, including ones registered from ARP/DHCP-derived identities that always carry a real MAC. There's no `CHECK` constraint or service-layer invariant stating "this column is only ever `NULL` when the device was registered/merged from a placeholder-MAC (mDNS-only) identity" — a future code path could set it to `None` for an unrelated reason without anything flagging that as suspicious. This is a minor schema-precision gap, not a functional bug, since no current code path sets it to `None` except the one intentional case.
+**Fix:** Consider a brief model-level docstring note on `last_known_mac` clarifying that `None` specifically means "registered/merged from an mDNS-only (placeholder-MAC) identity, no real MAC observed yet" so future maintainers don't conflate it with "MAC unknown for some other reason."
 
 ---
 
