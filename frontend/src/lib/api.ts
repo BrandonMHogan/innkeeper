@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:8000';
+const API_BASE = import.meta.env.PUBLIC_API_URL ?? '';
 
 export async function apiPost(path: string, body: unknown): Promise<Response> {
   const res = await fetch(`${API_BASE}${path}`, {
