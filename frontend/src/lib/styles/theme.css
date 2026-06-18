@@ -1,4 +1,25 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Innkeeper dark theme — single source of truth for color tokens.
+ * Two layers, kept in sync intentionally:
+ *  1. `--color-*` — Phase 1's original brand aliases (background/surface/border/
+ *     accent/fg/muted/destructive). Existing inline-styled markup from Phase 1
+ *     reads these directly; do not remove them.
+ *  2. shadcn-svelte standard tokens (--background, --primary, --card, --ring,
+ *     --destructive, etc.) — required by every installed shadcn-svelte/Bits UI
+ *     component (Button, Card, Dialog, Select, Badge, Input, Label). These are
+ *     mapped to the SAME hex values as the brand aliases above so there is only
+ *     one palette, expressed twice.
+ *
+ * Swapping the theme means editing the hex values in :root and .dark only.
+ */
+
 :root {
+  /* Phase 1 brand aliases (kept for existing inline-styled markup) */
   --color-background: #0f172a;
   --color-surface: #1e293b;
   --color-border: #334155;
@@ -8,10 +29,91 @@
   --color-muted: #64748b;
   --color-destructive: #ef4444;
   --color-destructive-fg: #ffffff;
-
-  /* Submit button fill override — emerald-500 fails AA for white text (~2.4:1);
-     emerald-600 passes (~3.5:1). See UI-SPEC.md "Submit button contrast note". */
   --color-accent-button-bg: #059669;
+
+  /* Phase 2 semantic addition: unknown/warning state (amber) */
+  --color-warning: #f59e0b;
+  --color-warning-fg: #1f2937;
+
+  --radius: 0.5rem;
+}
+
+/* Innkeeper is dark-only (see UI-SPEC "Theme"). The `.dark` class is applied
+   to <html> at the app root so shadcn-svelte's standard dark-mode component
+   classes (e.g. dark:bg-input/30) resolve correctly even though we never
+   toggle to light mode. */
+.dark {
+  /* shadcn-svelte standard tokens, mapped 1:1 to the brand hex values above */
+  --background: var(--color-background);
+  --foreground: var(--color-fg);
+
+  --card: var(--color-surface);
+  --card-foreground: var(--color-fg);
+
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-fg);
+
+  --primary: var(--color-accent-button-bg);
+  --primary-foreground: var(--color-accent-fg);
+
+  --secondary: var(--color-surface);
+  --secondary-foreground: var(--color-fg);
+
+  --muted: var(--color-surface);
+  --muted-foreground: var(--color-muted);
+
+  --accent: var(--color-surface);
+  --accent-foreground: var(--color-fg);
+
+  --destructive: var(--color-destructive);
+  --destructive-foreground: var(--color-destructive-fg);
+
+  --warning: var(--color-warning);
+  --warning-foreground: var(--color-warning-fg);
+
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-accent);
+
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 body {
