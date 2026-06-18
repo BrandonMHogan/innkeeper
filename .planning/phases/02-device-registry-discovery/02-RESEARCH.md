@@ -388,17 +388,17 @@ class Device(Base):
 | A3 | Docker `network_mode: host` (already adopted for ARP) transparently supports IP multicast (mDNS) without additional compose config | Common Pitfalls (Pitfall 4) | If wrong, mDNS discovery silently produces zero results in the deployed environment — recommend an explicit go/no-go verification step early in execution, mirroring Phase 1's D-05 spike pattern, rather than discovering this late |
 | A4 | `Protocol` (vs `ABC`) is the appropriate typing construct for `IdentityResolver` | Architecture Patterns Pattern 1 | Low risk — both are valid Python idioms satisfying D-01's "interface/strategy abstraction" requirement; if the codebase later establishes an ABC convention elsewhere, this can be trivially changed since there's no inheritance-based shared behavior to migrate |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `discovered_identities` rows ever be garbage-collected / expired?**
    - What we know: REQUIREMENTS.md's "Out of Scope" table states "Automatic data deletion" is rejected project-wide — retention is configurable, default keep-forever.
    - What's unclear: Whether an unregistered identity that hasn't been seen in months should still clutter the "unknown" section of the dashboard indefinitely.
-   - Recommendation: For Phase 2, do not implement any expiry/cleanup — surface all discovered identities regardless of age (consistent with the project-wide no-auto-delete stance). Revisit only if UAT reveals dashboard clutter; defer to a later phase if so.
+   - RESOLVED: For Phase 2, do not implement any expiry/cleanup — surface all discovered identities regardless of age (consistent with the project-wide no-auto-delete stance). Revisit only if UAT reveals dashboard clutter; defer to a later phase if so.
 
 2. **What exact DHCP/mDNS fields, beyond hostname + requested IP, should be parsed and stored?**
    - What we know: CONTEXT.md explicitly leaves "DHCP packet fields parsed beyond hostname + requested IP (e.g. vendor class)" to Claude's discretion.
    - What's unclear: Whether `vendor_class_id` (DHCP option 60) or mDNS TXT records add enough fusion-accuracy value to justify the extra parsing/storage now, given D-02/D-03's deliberately simple hostname/MAC-fallback strategy doesn't use them yet.
-   - Recommendation: Parse and store `vendor_class_id` from DHCP and the mDNS service `type`/`addresses` (not full TXT record dumps) since they're nearly free to capture alongside hostname and may inform the later fingerprint-resolver swap (deferred idea) — but do not build any fusion logic that consumes them yet (D-02/D-03 are locked).
+   - RESOLVED: Parse and store `vendor_class_id` from DHCP and the mDNS service `type`/`addresses` (not full TXT record dumps) since they're nearly free to capture alongside hostname and may inform the later fingerprint-resolver swap (deferred idea) — but do not build any fusion logic that consumes them yet (D-02/D-03 are locked).
 
 ## Environment Availability
 
