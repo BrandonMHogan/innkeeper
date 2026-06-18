@@ -89,6 +89,12 @@ None yet.
 - [Phase 1/3]: TimescaleDB schema (hypertable vs config separation, chunk sizing, downsample-not-delete policy) is expensive to change later — settle during early planning.
 - [Phase 2]: MAC-randomization identity model — how aggressively to dedupe rotating MACs is non-trivial and central.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260618-bmk | Add a scripted Lima VM dev environment so the Phase 1 docker-compose stack can be verified on a real Linux network namespace from any Mac | 2026-06-18 | fefb67c | [260618-bmk-add-a-scripted-lima-vm-dev-environment-s](./quick/260618-bmk-add-a-scripted-lima-vm-dev-environment-s/) |
+
 ## Deferred Items
 
 Items acknowledged and carried forward from previous milestone close:
@@ -100,5 +106,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-06-18T00:42:11.265Z
-Stopped at: Completed 01-03-PLAN.md
-Resume file: 01-02-PLAN.md (capture + compose — not yet executed)
+Stopped at: Completed 01-03-PLAN.md; quick task 260618-bmk (Lima VM dev environment) complete
+Resume file: 01-02-PLAN.md (capture + compose — Task 1 committed, awaiting human-verify checkpoint on a real Linux host or the new Lima VM)
