@@ -62,8 +62,16 @@ Plans:
   3. User can view each device's first-seen and last-seen timestamps
   4. A device that is not in the registry appears clearly marked as unknown when it joins the network
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Backend discovery foundation: DHCP/mDNS models, IdentityResolver fusion seam, discovery orchestration, devices registry API
+
+**Wave 2** *(blocked on Wave 1 completion, parallel with each other)*
+
+- [ ] 02-02-PLAN.md — Capture container: real DHCP sniff + AsyncZeroconf mDNS browser, zeroconf legitimacy checkpoint
+- [ ] 02-03-PLAN.md — Frontend: dashboard card grid, summary banner, Register/Merge dialogs
 
 ### Phase 3: Live Traffic + Bandwidth
 
@@ -167,7 +175,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
-| 2. Device Registry + Discovery | 0/TBD | Not started | - |
+| 2. Device Registry + Discovery | 0/3 | Not started | - |
 | 3. Live Traffic + Bandwidth | 0/TBD | Not started | - |
 | 4. Security | 0/TBD | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
