@@ -15,6 +15,7 @@ from src.services.identity_resolver import Observation
 router = APIRouter()
 
 _PROC_NET_ROUTE_PATH = "/proc/net/route"
+_MDNS_PLACEHOLDER_MAC = "00:00:00:00:00:00"
 
 
 def _detect_default_gateway() -> str | None:
@@ -127,15 +128,21 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
     db.add(event)
     await db.commit()
 
-    # mDNS browsing alone yields no MAC address — use a placeholder so the
-    # observation still resolves a hostname-keyed identity (D-02). ARP/DHCP
+    # mDNS browsing alone yields no MAC address. A hostname-less mDNS
+    # observation carries no usable identity signal at all (the placeholder
+    # MAC is shared across every hostname-less mDNS event, so resolving an
+    # identity from it would collide distinct physical devices onto one
+    # row) — skip identity resolution entirely in that case. ARP/DHCP
     # observations for the same physical device will independently resolve
-    # the real MAC-keyed or hostname-keyed identity; this is a known Phase 2
-    # limitation (mDNS contributes hostname enrichment, not MAC linkage).
+    # the real MAC-keyed identity; only hostname-bearing mDNS observations
+    # contribute to fusion (D-02), via the shared placeholder MAC.
+    if not payload.hostname or not payload.hostname.strip():
+        return {"ok": True, "skipped": "no identity signal"}
+
     await record_observation(
         db,
         Observation(
-            mac="00:00:00:00:00:00",
+            mac=_MDNS_PLACEHOLDER_MAC,
             hostname=payload.hostname,
             source="mdns",
             observed_at=datetime.utcnow(),
