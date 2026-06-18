@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-06-18T20:30:27.038Z"
-last_activity: 2026-06-18 -- Phase 02 execution started
+status: verifying
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-06-18T20:41:09.298Z"
+last_activity: 2026-06-18 -- Phase 02 gap-closure plan 04 executed (CR-01, CR-02 closed)
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
   percent: 25
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 ## Current Position
 
 Phase: 02 (device-registry-discovery) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-06-18 -- Phase 02 execution started
+Plan: 4 of 4 (gap-closure)
+Status: Phase complete — ready for re-verification (CR-01, CR-02 closed)
+Last activity: 2026-06-18 -- Phase 02 gap-closure plan 04 executed (CR-01, CR-02 closed)
 
 Progress: [██████████] 100%
 
@@ -61,6 +61,7 @@ Progress: [██████████] 100%
 | Phase 02 P01 | 25min | 2 tasks | 15 files |
 | Phase 02 P02 | 12min | 2 tasks | 2 files |
 | Phase 02 P03 | 18min | 2 tasks | 5 files |
+| Phase 02 P04 | 18min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 2: used a throwaway /tmp venv with Python 3.13 (homebrew) to run pytest since project requires >=3.13 and no project venv existed yet
 - [Phase ?]: Pinned zeroconf==0.148.0 (not 0.149.16) — live pip index confirmed 0.148.0 as latest actually-published version; package identity already verified
 - [Phase 02]: Phase 2: bits-ui Select.Value imported directly (not re-exported via ui/select/index.ts) for placeholder/selected-label display in Register/Merge dialog Select triggers
+- [Phase 02 P04]: ingest_mdns guard depends only on hostname presence (not a combined MAC+hostname check) since mDNS observations always carry the same placeholder MAC today — closes CR-01 over-fusion bug
+- [Phase 02 P04]: Frontend listDevices()/registerDevice() now call the canonical /api/devices/ (trailing slash) path to avoid the 307-redirect hop on POST — closes CR-02 path mismatch
 
 ### Pending Todos
 
@@ -117,8 +120,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-18T19:39:10.262Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-06-18T20:41:09.298Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: 
 
 ## Decision Coverage Override (Phase 02 gap closure, 2026-06-18)
