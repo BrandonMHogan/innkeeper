@@ -9,14 +9,27 @@ Must run as root inside the container because Python cannot receive
 file-level capabilities — see 01-RESEARCH.md Pattern 8.
 """
 
+import asyncio
 import os
 import signal
 import threading
 
 import httpx
 from scapy.all import ARP, BOOTP, DHCP, Ether, sniff
+from zeroconf import ServiceStateChange, Zeroconf
+from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
 
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
+
+COMMON_SERVICE_TYPES = [
+    "_http._tcp.local.",
+    "_airplay._tcp.local.",
+    "_ipp._tcp.local.",
+    "_googlecast._tcp.local.",
+    "_spotify-connect._tcp.local.",
+    "_device-info._tcp.local.",
+    "_workstation._tcp.local.",
+]
 
 stop_event = threading.Event()
 
@@ -81,6 +94,61 @@ def on_dhcp_packet(pkt):
         print(f"[capture] DHCP POST failed: {exc}")
 
 
+def on_service_state_change(zeroconf, service_type, name, state_change):
+    """Called by AsyncServiceBrowser whenever a matching mDNS service is
+    seen. Passive only — browses the fixed COMMON_SERVICE_TYPES allowlist,
+    no active probing beyond the standard mDNS query/response exchange."""
+    if state_change is not ServiceStateChange.Added:
+        return
+    asyncio.ensure_future(_post_service_info(zeroconf, service_type, name))
+
+
+async def _post_service_info(zeroconf, service_type, name):
+    info = AsyncServiceInfo(service_type, name)
+    if await info.async_request(zeroconf, 3000):
+        payload = {
+            "hostname": info.server,
+            "addresses": ",".join(info.parsed_scoped_addresses()),
+            "service_type": service_type,
+        }
+        async with httpx.AsyncClient() as client:
+            try:
+                await client.post(f"{API_URL}/api/capture/mdns", json=payload, timeout=5.0)
+            except Exception as exc:  # noqa: BLE001 - log and keep browsing
+                print(f"[capture] mDNS POST failed: {exc}")
+
+
+async def run_mdns_browser(stop_event_async: asyncio.Event):
+    aiozc = AsyncZeroconf()
+    browser = AsyncServiceBrowser(
+        aiozc.zeroconf, COMMON_SERVICE_TYPES, handlers=[on_service_state_change]
+    )
+    await stop_event_async.wait()
+    await browser.async_cancel()
+    await aiozc.async_close()
+
+
+async def _mdns_main():
+    """Bridges the module-level threading.Event (shared SIGTERM stop signal
+    with ARP/DHCP) into a local asyncio.Event for run_mdns_browser, without
+    introducing a second independent stop mechanism."""
+    internal_event = asyncio.Event()
+
+    async def _watch_stop_event():
+        while not stop_event.is_set():
+            await asyncio.sleep(0.5)
+        internal_event.set()
+
+    asyncio.ensure_future(_watch_stop_event())
+    await run_mdns_browser(internal_event)
+
+
+def run_mdns_thread():
+    print("[capture] Starting mDNS browser...")
+    asyncio.run(_mdns_main())
+    print("[capture] mDNS browser stopped.")
+
+
 def run_arp_sniff():
     print("[capture] Starting ARP sniff on all interfaces...")
     sniff(
@@ -106,12 +174,15 @@ def run_dhcp_sniff():
 def main():
     arp_thread = threading.Thread(target=run_arp_sniff, name="arp-sniff")
     dhcp_thread = threading.Thread(target=run_dhcp_sniff, name="dhcp-sniff")
+    mdns_thread = threading.Thread(target=run_mdns_thread, name="mdns-browser")
 
+    mdns_thread.start()
     dhcp_thread.start()
     arp_thread.start()
 
     arp_thread.join()
     dhcp_thread.join()
+    mdns_thread.join()
 
     print("[capture] Stopped.")
 
