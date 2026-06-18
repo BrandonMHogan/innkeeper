@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from src.models.device import Device, DeviceType
 from src.models.discovered_identity import DiscoveredIdentity
 from src.services.discovery import record_observation
-from src.services.identity_resolver import Observation
+from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
 
 
 async def test_record_observation_creates_discovered_identity(test_db):
@@ -78,6 +78,70 @@ async def test_registered_identity_key_change_no_phantom(test_db):
         devices = (await db.execute(select(Device))).scalars().all()
         assert len(devices) == 1
         assert devices[0].identity_key == "host:renamed-phone"
+
+
+async def test_placeholder_mac_observation_does_not_hijack_registered_device(test_db):
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        device = Device(
+            identity_key="host:living-room-speaker",
+            name="Living Room Speaker",
+            owner="Brandon",
+            type=DeviceType.OTHER,
+            trusted=False,
+            last_known_mac=MDNS_PLACEHOLDER_MAC,
+        )
+        db.add(device)
+        await db.commit()
+
+        await record_observation(
+            db,
+            Observation(
+                mac=MDNS_PLACEHOLDER_MAC,
+                hostname="someone-elses-phone",
+                source="mdns",
+                observed_at=datetime.utcnow(),
+            ),
+        )
+
+        devices = (await db.execute(select(Device))).scalars().all()
+        assert len(devices) == 1
+        assert devices[0].identity_key == "host:living-room-speaker"
+        assert devices[0].name == "Living Room Speaker"
+        assert devices[0].last_known_mac == MDNS_PLACEHOLDER_MAC
+
+        identities = (await db.execute(select(DiscoveredIdentity))).scalars().all()
+        assert len(identities) == 1
+        assert identities[0].identity_key == "host:someone-elses-phone"
+
+
+async def test_record_observation_non_placeholder_mac_still_matches_device(test_db):
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        device = Device(
+            identity_key="mac:aa:bb:cc:dd:ee:ff",
+            name="Real Device",
+            owner="Brandon",
+            type=DeviceType.OTHER,
+            trusted=False,
+            last_known_mac="aa:bb:cc:dd:ee:ff",
+        )
+        db.add(device)
+        await db.commit()
+
+        await record_observation(
+            db,
+            Observation(
+                mac="aa:bb:cc:dd:ee:ff",
+                hostname="renamed",
+                source="dhcp",
+                observed_at=datetime.utcnow(),
+            ),
+        )
+
+        devices = (await db.execute(select(Device))).scalars().all()
+        assert len(devices) == 1
+        assert devices[0].identity_key == "host:renamed"
 
 
 async def test_concurrent_same_identity_no_duplicate(test_db):
