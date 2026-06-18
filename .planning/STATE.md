@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-06-18T23:52:34.525Z"
+status: verifying
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-06-18T23:56:52.819Z"
 last_activity: 2026-06-18 -- Phase 02 gap-closure plan 04 executed (CR-01, CR-02 closed)
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 8
+  completed_plans: 8
   percent: 25
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: 02 (device-registry-discovery) — EXECUTING
 Plan: 4 of 4 (gap-closure)
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-18 -- Phase 02 gap-closure plan 04 executed (CR-01, CR-02 closed)
 
 Progress: [██████████] 100%
@@ -62,6 +62,7 @@ Progress: [██████████] 100%
 | Phase 02 P02 | 12min | 2 tasks | 2 files |
 | Phase 02 P03 | 18min | 2 tasks | 5 files |
 | Phase 02 P04 | 18min | 2 tasks | 4 files |
+| Phase 02 P05 | 25min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Phase 2: bits-ui Select.Value imported directly (not re-exported via ui/select/index.ts) for placeholder/selected-label display in Register/Merge dialog Select triggers
 - [Phase 02 P04]: ingest_mdns guard depends only on hostname presence (not a combined MAC+hostname check) since mDNS observations always carry the same placeholder MAC today — closes CR-01 over-fusion bug
 - [Phase 02 P04]: Frontend listDevices()/registerDevice() now call the canonical /api/devices/ (trailing slash) path to avoid the 307-redirect hop on POST — closes CR-02 path mismatch
+- [Phase ?]: Phase 02 P05: hoisted MDNS_PLACEHOLDER_MAC to identity_resolver.py as single source of truth; record_observation excludes placeholder MAC from Device-branch matching entirely (CR-05 fix)
+- [Phase ?]: Phase 02 P05: register_device/merge_device refuse to persist placeholder MAC into Device.last_known_mac; column made nullable (migration 0002 edited in place, not yet shipped outside this branch)
 
 ### Pending Todos
 
@@ -120,11 +123,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-18T20:41:09.298Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-06-18T23:56:52.815Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: 
 
-## Decision Coverage Override (Phase 02 gap closure, 2026-06-18)
+None
 
 D-11 and D-12 (CONTEXT.md, Device List & Unknown-Device UX category) were flagged
 by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
