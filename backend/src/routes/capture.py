@@ -10,12 +10,11 @@ from src.models.arp_event import ArpEvent
 from src.models.dhcp_event import DhcpEvent
 from src.models.mdns_event import MdnsEvent
 from src.services.discovery import record_observation
-from src.services.identity_resolver import Observation
+from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
 
 router = APIRouter()
 
 _PROC_NET_ROUTE_PATH = "/proc/net/route"
-_MDNS_PLACEHOLDER_MAC = "00:00:00:00:00:00"
 
 
 def _detect_default_gateway() -> str | None:
@@ -142,7 +141,7 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
     await record_observation(
         db,
         Observation(
-            mac=_MDNS_PLACEHOLDER_MAC,
+            mac=MDNS_PLACEHOLDER_MAC,
             hostname=payload.hostname,
             source="mdns",
             observed_at=datetime.utcnow(),

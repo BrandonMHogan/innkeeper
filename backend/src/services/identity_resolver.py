@@ -2,6 +2,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+# Shared sentinel MAC used for hostname-bearing mDNS observations, which
+# carry no real device-specific MAC. This value is identical across every
+# such observation and must never be treated as a real device MAC for
+# Device-table matching purposes (CR-05) — doing so would let any mDNS
+# observation hijack any registered device that shares the same sentinel.
+MDNS_PLACEHOLDER_MAC = "00:00:00:00:00:00"
+
 
 @dataclass(frozen=True)
 class Observation:

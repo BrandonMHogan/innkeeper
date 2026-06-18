@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.device import Device
 from src.models.discovered_identity import DiscoveredIdentity
-from src.services.identity_resolver import HostnameFallbackResolver, IdentityResolver, Observation
+from src.services.identity_resolver import (
+    MDNS_PLACEHOLDER_MAC,
+    HostnameFallbackResolver,
+    IdentityResolver,
+    Observation,
+)
 
 
 async def upsert_discovered_identity(
@@ -71,10 +76,26 @@ async def record_observation(
     observation updates that row's identity_key/last_known_mac/last_seen in
     place instead of also writing a DiscoveredIdentity row — this prevents a
     registered device's hostname/MAC change from spawning a phantom unknown
-    card.
+    card. This fast path only applies when observation.mac is a real,
+    device-specific MAC: a placeholder-MAC observation (CR-05) skips the
+    Device-branch lookup entirely, since the placeholder is shared across
+    every hostname-bearing mDNS observation and must never be used to match
+    an existing Device by last_known_mac — doing so would let any mDNS
+    observation hijack any other registered device that happens to also
+    carry the shared placeholder.
     """
     resolver = resolver or HostnameFallbackResolver()
     identity_key = resolver.resolve(observation)
+
+    if observation.mac == MDNS_PLACEHOLDER_MAC:
+        await upsert_discovered_identity(
+            db,
+            identity_key=identity_key,
+            mac=observation.mac,
+            hostname=observation.hostname,
+            seen_at=observation.observed_at,
+        )
+        return
 
     result = await db.execute(select(Device).where(Device.last_known_mac == observation.mac))
     device = result.scalar_one_or_none()
