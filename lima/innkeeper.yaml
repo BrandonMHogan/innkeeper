@@ -1,0 +1,116 @@
+# Lima VM definition for Innkeeper local development.
+#
+# WHY THIS VM EXISTS (see .planning/phases/01-foundation-capture-feasibility/01-RESEARCH.md, D-01/D-03):
+# Docker Desktop on macOS runs containers inside a hidden macOS-side Linux VM whose
+# network is NAT-isolated from the real LAN. `network_mode: host` on macOS Docker
+# Desktop does NOT give a container the Mac's real LAN-routable interface — it is
+# silently scoped to Docker Desktop's internal NAT namespace, so ARP/broadcast
+# traffic from the actual home network never reaches the capture container.
+# Production targets a real Linux host (D-01); this Lima VM reproduces that same
+# real Linux network namespace locally so the Phase 1 D-05 go/no-go spike (capture
+# a genuine LAN ARP packet into `arp_events`) can be verified on a Mac.
+
+vmType: vz # Apple Virtualization framework — required for Lima's bridged network
+           # mode on macOS. The default `vmType: qemu` only supports Lima's NAT-style
+           # `lima:shared`/`lima:user-v2` networks, which have the same NAT-isolation
+           # problem as Docker Desktop and would defeat the purpose of this VM.
+os: Linux
+
+images:
+  # Mirrors the base image used by Lima's own bundled `default.yaml` template
+  # (Ubuntu LTS cloud image, arch-matched). Do not invent a custom image — this
+  # is the same release channel `limactl start template://default` resolves to.
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+cpus: 4
+memory: "4GiB"
+disk: "30GiB"
+
+# Bundled containerd is not needed — we provision and use Docker Engine instead
+# (see provision script below). Disabling avoids Lima auto-starting a second,
+# unused container runtime alongside Docker.
+containerd:
+  system: false
+  user: false
+
+mounts:
+  - location: "~/code/innkeeper"
+    mountPoint: "/home/{{.User}}.linux/innkeeper"
+    writable: true
+
+# NETWORKING: bridged (NOT shared/NAT) is mandatory.
+# Lima's default `networks: []` (or `lima: shared`) puts the guest on Lima's own
+# NAT network (the well-known 192.168.5.x range) — functionally identical to
+# Docker Desktop's NAT isolation, which is exactly the limitation this VM exists
+# to escape. Lima's bridged network mode (backed by `socket_vmnet`, per Lima's
+# "Network" docs: https://lima-vm.io/docs/config/network/#bridged-network) gives
+# the guest a DHCP lease directly on the Mac's physical LAN segment, so the guest
+# gets a real, LAN-routable IP in the same broadcast domain as the home router —
+# required to see real ARP/broadcast traffic for D-05.
+#
+# ASSUMPTION FLAGGED: `socket_vmnet` must be installed on the host
+# (`brew install socket_vmnet` via the lima-vm tap, or Lima's automated
+# `sudo limactl sudoers >etc/sudoers.d/lima && ...` setup per the bridged-network
+# guide) before `lima:bridged` resolves to a real interface. This cannot be
+# auto-installed by limactl itself; documented in README.md alongside
+# `brew install lima` as a co-requisite. Checked: lima.dev/docs/config/network/
+# "Bridged network" section, which names `socket_vmnet` as the required helper.
+networks:
+  - lima: bridged
+    interface: "lima0"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+
+      # Skip if Docker is already provisioned (idempotent across VM restarts).
+      if command -v docker >/dev/null 2>&1; then
+        exit 0
+      fi
+
+      # Install Docker Engine + compose plugin from Docker's official apt repo only
+      # (signed packages, not curl-pipe-to-sh or a third-party script — see plan
+      # threat model T-quick-01).
+      apt-get update
+      apt-get install -y ca-certificates curl gnupg
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+
+      ARCH="$(dpkg --print-architecture)"
+      CODENAME="$(. /etc/os-release && echo "$VERSION_CODENAME")"
+      echo \
+        "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
+        > /etc/apt/sources.list.d/docker.list
+
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      # Allow the default Lima user to run docker without sudo over `limactl shell`.
+      usermod -aG docker "${LIMA_CIDATA_USER:-$(id -un 1000)}"
+
+  - mode: boot
+    script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      systemctl enable --now docker
+
+probes:
+  - script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      if ! docker compose version >/dev/null 2>&1; then
+        echo >&2 "docker compose plugin is not available — Docker provisioning failed"
+        exit 1
+      fi
+    description: "docker compose plugin check"
+
+message: |
+  Innkeeper dev VM is up.
+  Repo is mounted at /home/{{.User}}.linux/innkeeper inside the VM.
+  Run `scripts/dev-vm.sh status` from the Mac to see the VM's bridged LAN IP.
