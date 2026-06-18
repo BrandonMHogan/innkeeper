@@ -50,6 +50,63 @@ async def test_mdns_ingest(client):
     assert response.status_code == 201
 
 
+async def test_mdns_ingest_without_hostname_does_not_collide(client, test_db):
+    """Two distinct hostname-less mDNS observations must not collapse into
+    a single placeholder-MAC identity (CR-01 regression)."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from src.models.discovered_identity import DiscoveredIdentity
+
+    payload_one = {
+        "hostname": None,
+        "addresses": "192.168.1.61",
+        "service_type": "_airplay._tcp.local.",
+    }
+    payload_two = {
+        "hostname": None,
+        "addresses": "192.168.1.62",
+        "service_type": "_googlecast._tcp.local.",
+    }
+
+    response_one = await client.post("/api/capture/mdns", json=payload_one)
+    assert response_one.status_code == 201
+
+    response_two = await client.post("/api/capture/mdns", json=payload_two)
+    assert response_two.status_code == 201
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 0
+
+
+async def test_mdns_ingest_with_hostname_still_resolves_identity(client, test_db):
+    """A hostname-bearing mDNS observation still resolves to a fused
+    hostname-keyed identity (guard clause does not regress the legitimate
+    fusion path)."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import async_sessionmaker
+
+    from src.models.discovered_identity import DiscoveredIdentity
+
+    payload = {
+        "hostname": "iphone.local",
+        "addresses": "192.168.1.60",
+        "service_type": "_airplay._tcp.local.",
+    }
+    response = await client.post("/api/capture/mdns", json=payload)
+    assert response.status_code == 201
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].identity_key == "host:iphone.local"
+
+
 async def test_arp_ingest_rejects_non_loopback(test_db):
     """POST /api/capture/arp from a non-loopback peer address returns 403.
 
