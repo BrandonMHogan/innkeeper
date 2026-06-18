@@ -66,7 +66,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Backend discovery foundation: DHCP/mDNS models, IdentityResolver fusion seam, discovery orchestration, devices registry API
+- [x] 02-01-PLAN.md — Backend discovery foundation: DHCP/mDNS models, IdentityResolver fusion seam, discovery orchestration, devices registry API
 
 **Wave 2** *(blocked on Wave 1 completion, parallel with each other)*
 
@@ -175,7 +175,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
-| 2. Device Registry + Discovery | 0/3 | Not started | - |
+| 2. Device Registry + Discovery | 1/3 | In Progress|  |
 | 3. Live Traffic + Bandwidth | 0/TBD | Not started | - |
 | 4. Security | 0/TBD | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |

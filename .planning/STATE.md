@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-06-18T14:24:13.616Z"
-last_activity: 2026-06-18 -- Phase 01 complete
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-06-18T18:58:15.911Z"
+last_activity: 2026-06-18 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 6
+  completed_plans: 4
   percent: 13
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** See every device on your network and what it's doing, in real time — and be able to act on it.
-**Current focus:** Phase 01 — foundation-capture-feasibility
+**Current focus:** Phase 02 — device-registry-discovery
 
 ## Current Position
 
-Phase: 01 (foundation-capture-feasibility) — COMPLETE
-Plan: 3 of 3 — all complete
-Status: Phase 01 complete. D-05 go/no-go gate PASS — real LAN ARP packet captured end-to-end (capture → API → PostgreSQL) on a bridged-network Lima VM, with full browser-based UAT (setup → login → dashboard) confirmed working.
-Last activity: 2026-06-18 -- Phase 01 complete
+Phase: 02 (device-registry-discovery) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-06-18 -- Phase 02 execution started
 
 Progress: [██████████] 100%
 
@@ -58,6 +58,7 @@ Progress: [██████████] 100%
 | 01 | 01 | 35min | 2 | 20 |
 | 01 | 03 | 12min | 2 | 16 |
 | 01 | 02 | ~3h (incl. live debugging) | 2 | 5 |
+| Phase 02 P01 | 25min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 1]: Frontend and API must be same-origin (nginx reverse-proxies /api/) — cross-port + CORS breaks SameSite=Lax session cookies on every fetch()-based client, invisible to unit tests
 - [Phase 1]: Capture's loopback-only ingest check must trust the runtime-detected Docker bridge gateway (via /proc/net/route), not just literal 127.0.0.1 — Docker hairpin NAT rewrites the source IP for any container using network_mode: host talking to a bridge-networked service via the host's published port
 - [Phase 1]: macOS local dev requires a bridged-network Lima VM (Docker Desktop's NAT isolation can't see real LAN traffic) — Mac-only tooling, irrelevant to the real Linux deployment target; see docs/dev/mac_setup.md
+- [Phase ?]: Phase 2: mDNS observations use placeholder MAC 00:00:00:00:00:00 since mDNS alone carries no MAC; documented as known limitation, ARP/DHCP independently resolve real identity
+- [Phase ?]: Phase 2: used a throwaway /tmp venv with Python 3.13 (homebrew) to run pytest since project requires >=3.13 and no project venv existed yet
 
 ### Pending Todos
 
@@ -110,6 +113,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-18T14:24:13.612Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-device-registry-discovery/02-CONTEXT.md
+Last session: 2026-06-18T18:58:15.907Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

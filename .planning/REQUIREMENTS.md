@@ -7,10 +7,10 @@
 
 ### Device Discovery (DISC)
 
-- [ ] **DISC-01**: System discovers all devices on the network automatically via ARP, mDNS, and DHCP lease analysis using multi-source fingerprinting (not MAC address alone — handles iOS/Android MAC randomization)
-- [ ] **DISC-02**: User can register a device in the device registry — assign a name, owner, type, and trusted flag
-- [ ] **DISC-03**: System tracks and displays device history — first seen and last seen timestamps per device
-- [ ] **DISC-04**: System detects when an unregistered device joins the network and marks it as unknown
+- [x] **DISC-01**: System discovers all devices on the network automatically via ARP, mDNS, and DHCP lease analysis using multi-source fingerprinting (not MAC address alone — handles iOS/Android MAC randomization)
+- [x] **DISC-02**: User can register a device in the device registry — assign a name, owner, type, and trusted flag
+- [x] **DISC-03**: System tracks and displays device history — first seen and last seen timestamps per device
+- [x] **DISC-04**: System detects when an unregistered device joins the network and marks it as unknown
 
 ### Traffic & Bandwidth (TRAF)
 
@@ -137,10 +137,10 @@
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
-| DISC-01 | Phase 2 | Pending |
-| DISC-02 | Phase 2 | Pending |
-| DISC-03 | Phase 2 | Pending |
-| DISC-04 | Phase 2 | Pending |
+| DISC-01 | Phase 2 | Complete |
+| DISC-02 | Phase 2 | Complete |
+| DISC-03 | Phase 2 | Complete |
+| DISC-04 | Phase 2 | Complete |
 | TRAF-01 | Phase 3 | Pending |
 | TRAF-02 | Phase 3 | Pending |
 | TRAF-03 | Phase 3 | Pending |
