@@ -2,14 +2,31 @@
 
 Self-hosted home network monitoring and management platform.
 
-## Development (Lima VM)
+## Production (Linux host)
+
+Innkeeper's actual deployment target is a real Linux host (per `D-01`/`D-02`
+in `01-RESEARCH.md`) — no VM layer, no Lima, no `socket_vmnet`. There,
+`network_mode: host` in `docker-compose.yml` works natively, so the entire
+setup is:
+
+```sh
+# Install Docker + Compose plugin (e.g. via Docker's official apt repo)
+docker compose up
+```
+
+Everything below this section is Mac-only developer tooling and does not
+apply on Linux.
+
+## Development (Lima VM, macOS only)
 
 **Why:** Docker Desktop on macOS isolates containers behind NAT and cannot
 deliver real LAN ARP/broadcast traffic to a `network_mode: host` container
 (confirmed in `01-RESEARCH.md`). Verifying the Phase 1 capture spike (D-05:
 capturing a real ARP packet into `arp_events`) requires a genuine Linux
 network namespace with a bridged, LAN-routable IP — so local development
-uses a Lima VM instead of Docker Desktop directly.
+on a Mac uses a Lima VM instead of Docker Desktop directly. This is a
+workaround for macOS's virtualization limits, not part of the product or
+the production deployment.
 
 **One-time prerequisites:**
 
