@@ -11,8 +11,8 @@
 - [x] **DISC-02**: User can register a device in the device registry — assign a name, owner, type, and trusted flag
 - [x] **DISC-03**: System tracks and displays device history — first seen and last seen timestamps per device
 - [x] **DISC-04**: System detects when an unregistered device joins the network and marks it as unknown
-- [ ] **DISC-05**: System infers a likely vendor (e.g. "Apple", "Samsung", "Sonos") for an unknown device from its MAC OUI prefix, and displays it on the unknown-device card — a best-effort hint, not a registry field, since the user may override or ignore it
-- [ ] **DISC-06**: System infers a likely device type/category (e.g. phone, computer, TV/streaming, smart-home) for an unknown device from available signals (vendor, mDNS service type, DHCP vendor class) and pre-fills the register form's type/name fields with the best guess — the user can always change or reject the suggestion before registering
+- [x] **DISC-05**: System infers a likely vendor (e.g. "Apple", "Samsung", "Sonos") for an unknown device from its MAC OUI prefix, and displays it on the unknown-device card — a best-effort hint, not a registry field, since the user may override or ignore it
+- [x] **DISC-06**: System infers a likely device type/category (e.g. phone, computer, TV/streaming, smart-home) for an unknown device from available signals (vendor, mDNS service type, DHCP vendor class) and pre-fills the register form's type/name fields with the best guess — the user can always change or reject the suggestion before registering
 
 ### Traffic & Bandwidth (TRAF)
 

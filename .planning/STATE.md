@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 02.1 UI-SPEC amended (D-10 gap closed)
-last_updated: "2026-06-19T12:38:07.441Z"
-last_activity: 2026-06-19 -- Phase 02 marked complete
+stopped_at: Completed 02.1-01-PLAN.md
+last_updated: "2026-06-19T12:59:27.113Z"
+last_activity: 2026-06-19 -- Phase 02.1 execution started
 progress:
   total_phases: 9
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
   percent: 22
 ---
 
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: 02 — COMPLETE
-Plan: 4 of 4 (gap-closure)
+Phase: 02.1 (device-identification-hints) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-06-19 -- Phase 02 marked complete
+Last activity: 2026-06-19 -- Phase 02.1 execution started
 
 Progress: [██████████] 100%
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100%
 | Phase 02 P03 | 18min | 2 tasks | 5 files |
 | Phase 02 P04 | 18min | 2 tasks | 4 files |
 | Phase 02 P05 | 25min | 2 tasks | 8 files |
+| Phase 02.1 P01 | 55min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase 02 P04]: Frontend listDevices()/registerDevice() now call the canonical /api/devices/ (trailing slash) path to avoid the 307-redirect hop on POST — closes CR-02 path mismatch
 - [Phase ?]: Phase 02 P05: hoisted MDNS_PLACEHOLDER_MAC to identity_resolver.py as single source of truth; record_observation excludes placeholder MAC from Device-branch matching entirely (CR-05 fix)
 - [Phase ?]: Phase 02 P05: register_device/merge_device refuse to persist placeholder MAC into Device.last_known_mac; column made nullable (migration 0002 edited in place, not yet shipped outside this branch)
+- [Phase ?]: Phase 02.1 P01: mac-vendor-lookup's AsyncMacLookup resolves its OUI snapshot from a build-time-populated cache path, not a runtime network call
+- [Phase ?]: Phase 02.1 P01: Docker api image required a rebuild after adding mac-vendor-lookup dependency - stale image caused ModuleNotFoundError, caught by test_compose.py
 
 ### Pending Todos
 
@@ -123,11 +126,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-19T10:49:35.429Z
-Stopped at: Phase 02.1 UI-SPEC amended (D-10 gap closed)
+Last session: 2026-06-19T12:59:27.109Z
+Stopped at: Completed 02.1-01-PLAN.md
 Resume file: 
 
-.planning/phases/02.1-device-identification-hints/02.1-UI-SPEC.md
+None
 
 D-11 and D-12 (CONTEXT.md, Device List & Unknown-Device UX category) were flagged
 by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
