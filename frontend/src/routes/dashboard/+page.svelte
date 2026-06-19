@@ -5,6 +5,10 @@
   import DeviceCard from '$lib/components/DeviceCard.svelte';
   import RegisterDialog from '$lib/components/RegisterDialog.svelte';
   import MergeDialog from '$lib/components/MergeDialog.svelte';
+  import LiveTrafficFeed from '$lib/components/LiveTrafficFeed.svelte';
+  import BandwidthHistoryChart from '$lib/components/BandwidthHistoryChart.svelte';
+  import DestinationsBreakdown from '$lib/components/DestinationsBreakdown.svelte';
+  import NetworkBandwidthChart from '$lib/components/NetworkBandwidthChart.svelte';
 
   interface DeviceListItem {
     id: number;
@@ -35,11 +39,16 @@
   );
   const selectedDeviceGuess = $derived(devices.find((d) => d.id === selectedIdentityId));
 
+  let selectedDeviceId = $state<number | null>(null);
+
   async function loadDevices() {
     try {
       devices = (await listDevices()) as DeviceListItem[];
     } catch {
       devices = [];
+    }
+    if (selectedDeviceId === null && registeredDevices.length > 0) {
+      selectedDeviceId = registeredDevices[0].id;
     }
   }
 
@@ -91,6 +100,32 @@
     <h1 style="font-size: 28px; font-weight: 700; line-height: 1.15; color: var(--color-fg); margin: 0 0 16px 0;">
       Dashboard
     </h1>
+
+    <LiveTrafficFeed />
+
+    {#if registeredDevices.length > 0}
+      <section style="margin-bottom: 48px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-muted);">
+            Device
+          </span>
+          <select
+            bind:value={selectedDeviceId}
+            style="background: var(--color-surface); color: var(--color-fg); border: 1px solid var(--color-border); border-radius: 6px; padding: 8px 16px; font-size: 14px; min-height: 44px;"
+          >
+            {#each registeredDevices as device (device.id)}
+              <option value={device.id}>{device.name}</option>
+            {/each}
+          </select>
+        </div>
+        {#if selectedDeviceId !== null}
+          <BandwidthHistoryChart deviceId={selectedDeviceId} />
+          <DestinationsBreakdown deviceId={selectedDeviceId} />
+        {/if}
+      </section>
+    {/if}
+
+    <NetworkBandwidthChart />
 
     <div
       style="background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 24px; margin-bottom: 24px; font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-fg);"
