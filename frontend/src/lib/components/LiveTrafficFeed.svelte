@@ -7,13 +7,14 @@
   import AlertTriangle from '@lucide/svelte/icons/alert-triangle';
 
   interface TopTalker {
-    device: string;
+    device_id: number | null;
+    device_name: string;
     bytes: number;
     [key: string]: unknown;
   }
 
   interface ActiveConnection {
-    device: string;
+    device_mac: string;
     dst_ip: string;
     dst_hostname?: string | null;
     dst_port?: number | null;
@@ -128,10 +129,10 @@
         <CardContent>
           <ScrollArea style="max-height: 280px;">
             <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;">
-              {#each snapshot?.top_talkers ?? [] as talker, i (talker.device + i)}
+              {#each snapshot?.top_talkers ?? [] as talker, i (`${talker.device_id ?? talker.device_name}-${i}`)}
                 <li style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 8px 16px;">
                   <span style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-fg);">
-                    {talker.device}
+                    {talker.device_name}
                   </span>
                   <span style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted);">
                     {formatBytes(talker.bytes)}
@@ -152,10 +153,10 @@
         <CardContent>
           <ScrollArea style="max-height: 280px;">
             <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;">
-              {#each snapshot?.active_connections ?? [] as conn, i (conn.device + conn.dst_ip + i)}
+              {#each snapshot?.active_connections ?? [] as conn, i (`${conn.device_mac}-${conn.dst_ip}-${i}`)}
                 <li style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 8px 16px;">
                   <span style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-fg);">
-                    {conn.device} → {conn.dst_hostname ?? conn.dst_ip}
+                    {conn.device_mac} → {conn.dst_hostname ?? conn.dst_ip}
                   </span>
                   <span style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted);">
                     {conn.protocol ?? ''}{conn.dst_port ? `:${conn.dst_port}` : ''} · {formatBytes(conn.bytes)}
