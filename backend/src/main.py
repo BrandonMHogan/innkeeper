@@ -1,17 +1,32 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.middleware.sessions import SessionMiddleware
 
-from src.routes import auth, capture, devices
+from src.routes import auth, capture, devices, traffic
+from src.services.traffic_broadcaster import update_snapshot_loop
 from src.settings import get_settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
     from src.database import engine
+
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    broadcaster_stop_event = asyncio.Event()
+    broadcaster_task = asyncio.create_task(update_snapshot_loop(broadcaster_stop_event, session_factory))
+
+    yield
+
+    broadcaster_stop_event.set()
+    broadcaster_task.cancel()
+    try:
+        await broadcaster_task
+    except asyncio.CancelledError:
+        pass
 
     await engine.dispose()
 
@@ -40,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router, prefix="/api/auth")
     app.include_router(capture.router, prefix="/api/capture")
     app.include_router(devices.router, prefix="/api/devices")
+    app.include_router(traffic.router, prefix="/api/traffic")
 
     return app
 

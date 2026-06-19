@@ -1,7 +1,11 @@
+import json
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.models.bandwidth import BandwidthMetric
+from src.models.device import Device, DeviceType
 from src.models.traffic_flow import TrafficFlow
 
 
@@ -90,3 +94,92 @@ async def test_traffic_ingest_rejects_non_loopback(test_db):
             assert response.status_code == 403
     finally:
         app.dependency_overrides.clear()
+
+
+async def test_compute_snapshot_ranks_top_talkers_descending_by_bytes(test_db):
+    """_compute_snapshot's top_talkers list is sorted descending by summed
+    bytes over the rolling window."""
+    from src.services.traffic_broadcaster import _compute_snapshot
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    now = datetime.now(timezone.utc)
+    async with session_maker() as db:
+        device_low = Device(
+            identity_key="host:low",
+            name="Low Talker",
+            type=DeviceType.LAPTOP,
+            last_known_mac="aa:aa:aa:aa:aa:aa",
+        )
+        device_high = Device(
+            identity_key="host:high",
+            name="High Talker",
+            type=DeviceType.LAPTOP,
+            last_known_mac="bb:bb:bb:bb:bb:bb",
+        )
+        db.add_all([device_low, device_high])
+        await db.flush()
+
+        db.add(TrafficFlow(time=now, device_mac="aa:aa:aa:aa:aa:aa", dst_ip="1.1.1.1", dst_port=443, protocol=6, bytes=100))
+        db.add(TrafficFlow(time=now, device_mac="bb:bb:bb:bb:bb:bb", dst_ip="2.2.2.2", dst_port=443, protocol=6, bytes=900))
+        await db.commit()
+
+        snapshot = await _compute_snapshot(db)
+        macs_in_order = [talker["device_name"] for talker in snapshot["top_talkers"]]
+        assert macs_in_order == ["High Talker", "Low Talker"]
+
+
+async def test_compute_snapshot_excludes_stale_rows_outside_rolling_window(test_db):
+    """A TrafficFlow row older than the 5-minute rolling window is excluded
+    from the top_talkers ranking (proves the rolling window, D-12)."""
+    from src.services.traffic_broadcaster import _compute_snapshot
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    now = datetime.now(timezone.utc)
+    stale_time = now - timedelta(minutes=10)
+    async with session_maker() as db:
+        device = Device(
+            identity_key="host:onlyone",
+            name="Only Device",
+            type=DeviceType.LAPTOP,
+            last_known_mac="cc:cc:cc:cc:cc:cc",
+        )
+        db.add(device)
+        await db.flush()
+
+        db.add(TrafficFlow(time=stale_time, device_mac="cc:cc:cc:cc:cc:cc", dst_ip="3.3.3.3", dst_port=443, protocol=6, bytes=99999))
+        db.add(TrafficFlow(time=now, device_mac="cc:cc:cc:cc:cc:cc", dst_ip="4.4.4.4", dst_port=443, protocol=6, bytes=50))
+        await db.commit()
+
+        snapshot = await _compute_snapshot(db)
+        assert len(snapshot["top_talkers"]) == 1
+        assert snapshot["top_talkers"][0]["bytes"] == 50
+
+
+async def test_stream_event_generator_yields_one_snapshot_event(monkeypatch):
+    """Calling the SSE route's event_generator function directly (mocking
+    request.is_disconnected() to return True after the first iteration)
+    yields exactly one {"event": "snapshot", ...} dict whose data field is
+    valid JSON matching get_latest_snapshot()'s shape."""
+    from src.routes.traffic import traffic_stream
+    from src.services import traffic_broadcaster
+
+    fake_snapshot = {"top_talkers": [], "active_connections": [], "computed_at": "2026-06-19T12:00:00Z"}
+    monkeypatch.setattr(traffic_broadcaster, "_latest_snapshot", fake_snapshot)
+
+    class FakeRequest:
+        def __init__(self):
+            self._calls = 0
+
+        async def is_disconnected(self):
+            self._calls += 1
+            return self._calls > 1
+
+    response = await traffic_stream(FakeRequest())
+    events = []
+    async for event in response.body_iterator:
+        events.append(event)
+
+    assert len(events) >= 1
+    first = events[0]
+    assert first["event"] == "snapshot"
+    assert json.loads(first["data"]) == fake_snapshot
