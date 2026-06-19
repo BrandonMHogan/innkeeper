@@ -9,6 +9,8 @@ from src.database import get_db
 from src.models.arp_event import ArpEvent
 from src.models.dhcp_event import DhcpEvent
 from src.models.mdns_event import MdnsEvent
+from src.models.traffic_flow import TrafficFlow
+from src.services.bandwidth_source import PassiveCaptureBandwidthSource
 from src.services.discovery import record_observation
 from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
 
@@ -69,6 +71,28 @@ class MdnsEventPayload(BaseModel):
     hostname: str | None = None
     addresses: str
     service_type: str
+
+
+class TrafficFlowPayload(BaseModel):
+    src_mac: str
+    dst_ip: str
+    dst_port: int | None = None
+    protocol: int
+    bytes: int
+    dst_hostname: str | None = None
+
+
+# T-03-08: bound the worst-case write volume a single rollup can cause, in
+# case a misbehaving/compromised capture process sends a pathologically
+# large flow list. Several thousand distinct 5-tuples in one ~7s window is
+# already an extreme outlier for a single household's WAN traffic.
+_MAX_FLOWS_PER_ROLLUP = 5000
+
+
+class TrafficRollupPayload(BaseModel):
+    interval_start: datetime
+    interval_end: datetime
+    flows: list[TrafficFlowPayload]
 
 
 @router.post("/arp", status_code=status.HTTP_201_CREATED)
@@ -154,4 +178,59 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
             mdns_service_type=payload.service_type,
         ),
     )
+    return {"ok": True}
+
+
+@router.post("/traffic", status_code=status.HTTP_201_CREATED)
+async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Capture never writes directly to the DB.
+
+    Writes one TrafficFlow row per distinct 5-tuple in the rollup and one
+    summed BandwidthMetric row per distinct src_mac, via the swappable
+    BandwidthSource (D-07).
+
+    Known v1 limitation: bytes_rx is hardcoded to 0.0 for every rollup this
+    route writes. A single-point passive capture sniffing WAN-bound traffic
+    cannot reliably observe a device's inbound return traffic with the same
+    5-tuple fidelity used here — correlating egress frames with inbound
+    responses would require full bidirectional flow tracking/connection-state
+    matching, explicitly out of scope for D-04's flow-level, non-DPI capture
+    design. TRAF-02 is still satisfied (bytes_tx is real, captured data);
+    full bidirectional accounting is a candidate backlog item once a
+    router-side counter source (e.g. a future UniFi adapter) exists.
+    """
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    if len(payload.flows) > _MAX_FLOWS_PER_ROLLUP:
+        raise HTTPException(status_code=413, detail="Rollup payload exceeds maximum flow count")
+
+    bytes_by_mac: dict[str, float] = {}
+    for flow in payload.flows:
+        db.add(
+            TrafficFlow(
+                time=payload.interval_end,
+                device_mac=flow.src_mac,
+                dst_ip=flow.dst_ip,
+                dst_port=flow.dst_port,
+                protocol=flow.protocol,
+                bytes=flow.bytes,
+                dst_hostname=flow.dst_hostname,
+            )
+        )
+        bytes_by_mac[flow.src_mac] = bytes_by_mac.get(flow.src_mac, 0.0) + flow.bytes
+
+    await db.commit()
+
+    bandwidth_source = PassiveCaptureBandwidthSource()
+    for device_mac, summed_bytes in bytes_by_mac.items():
+        await bandwidth_source.write_rollup(
+            db,
+            device_mac=device_mac,
+            bytes_rx=0.0,
+            bytes_tx=summed_bytes,
+            observed_at=payload.interval_end,
+        )
+
     return {"ok": True}

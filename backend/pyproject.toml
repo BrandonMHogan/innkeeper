@@ -18,6 +18,7 @@ dependencies = [
     "uvloop",
     "mac-vendor-lookup==0.1.15",
     "tldextract==5.3.0",
+    "sse-starlette==3.4.4",
 ]
 
 [project.optional-dependencies]
