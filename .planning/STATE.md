@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02.1-01-PLAN.md
-last_updated: "2026-06-19T12:59:27.113Z"
-last_activity: 2026-06-19 -- Phase 02.1 execution started
+stopped_at: Completed 02.1-02-PLAN.md (human-verify checkpoint approved)
+last_updated: "2026-06-19T13:30:00.000Z"
+last_activity: 2026-06-19 -- Phase 02.1 complete, human-verify checkpoint approved
 progress:
   total_phases: 9
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 9
-  percent: 22
+  completed_plans: 10
+  percent: 33
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** See every device on your network and what it's doing, in real time — and be able to act on it.
-**Current focus:** Phase 02.1 — device-identification-hints
+**Current focus:** Phase 02.1 — device-identification-hints (complete)
 
 ## Current Position
 
-Phase: 02.1 (device-identification-hints) — EXECUTING
+Phase: 02.1 (device-identification-hints) — COMPLETE
 Plan: 2 of 2
-Status: Ready to execute
-Last activity: 2026-06-19 -- Phase 02.1 execution started
+Status: Human-verify checkpoint approved; phase complete
+Last activity: 2026-06-19 -- Phase 02.1 complete, human-verify checkpoint approved
 
 Progress: [██████████] 100%
 
@@ -94,6 +94,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 02 P05: register_device/merge_device refuse to persist placeholder MAC into Device.last_known_mac; column made nullable (migration 0002 edited in place, not yet shipped outside this branch)
 - [Phase ?]: Phase 02.1 P01: mac-vendor-lookup's AsyncMacLookup resolves its OUI snapshot from a build-time-populated cache path, not a runtime network call
 - [Phase ?]: Phase 02.1 P01: Docker api image required a rebuild after adding mac-vendor-lookup dependency - stale image caused ModuleNotFoundError, caught by test_compose.py
+- [Phase 02.1 P02]: Task 3's human-verify checkpoint (all six UI-SPEC Checker Sign-Off checks: inference line presence/absence, info-icon popover open/close/keyboard, touch tap-to-toggle, Register dialog pre-fill with/without guess) approved by user 2026-06-19 — phase 02.1 complete, DISC-05/DISC-06 fully satisfied
 
 ### Pending Todos
 
@@ -126,8 +127,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-19T12:59:27.109Z
-Stopped at: Completed 02.1-01-PLAN.md
+Last session: 2026-06-19T13:30:00.000Z
+Stopped at: Completed 02.1-02-PLAN.md (human-verify checkpoint approved)
 Resume file: 
 
 None

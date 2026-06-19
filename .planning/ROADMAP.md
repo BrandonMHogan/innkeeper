@@ -86,7 +86,7 @@ Plans:
   3. When no reliable signal exists for vendor or type, the card shows plain "Unknown" rather than a fabricated guess
   4. Opening the Register dialog for an unknown device pre-fills the type field (and name field, when a hostname is available) with the inferred guess — the user can change or clear it before submitting, and the inference is never silently saved as fact
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 
 Plans:
 **Wave 1**
@@ -95,7 +95,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02.1-02-PLAN.md — Frontend: inference line + raw-signal info popover on DeviceCard, Register dialog pre-fill
+- [x] 02.1-02-PLAN.md — Frontend: inference line + raw-signal info popover on DeviceCard, Register dialog pre-fill
 
 ### Phase 3: Live Traffic + Bandwidth
 
