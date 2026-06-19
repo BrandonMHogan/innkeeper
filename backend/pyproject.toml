@@ -16,6 +16,7 @@ dependencies = [
     "scapy==2.7.0",
     "httpx",
     "uvloop",
+    "mac-vendor-lookup==0.1.15",
 ]
 
 [project.optional-dependencies]

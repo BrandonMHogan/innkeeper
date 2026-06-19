@@ -20,5 +20,7 @@ class DiscoveredIdentity(Base):
     identity_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     mac: Mapped[str] = mapped_column(String(17), nullable=False)
     hostname: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    mdns_service_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    dhcp_vendor_class: Mapped[str | None] = mapped_column(String(255), nullable=True)
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
