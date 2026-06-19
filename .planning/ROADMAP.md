@@ -115,7 +115,7 @@ Plans:
 **Wave 1**
 
 - [x] 03-01-PLAN.md — Backend storage foundation: traffic_flows hypertable, device_mac_history, swappable BandwidthSource interface, domain grouping
-- [ ] 03-02-PLAN.md — Capture container: dpkt WAN traffic sniff loop, 5-tuple aggregation, passive DNS cache
+- [x] 03-02-PLAN.md — Capture container: dpkt WAN traffic sniff loop, 5-tuple aggregation, passive DNS cache
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -212,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
-| 3. Live Traffic + Bandwidth | 1/4 | In Progress|  |
+| 3. Live Traffic + Bandwidth | 2/4 | In Progress|  |
 | 4. Security | 0/TBD | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
