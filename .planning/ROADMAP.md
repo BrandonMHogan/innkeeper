@@ -73,6 +73,25 @@ Plans:
 - [x] 02-02-PLAN.md — Capture container: real DHCP sniff + AsyncZeroconf mDNS browser, zeroconf legitimacy checkpoint
 - [x] 02-03-PLAN.md — Frontend: dashboard card grid, summary banner, Register/Merge dialogs
 
+### Phase 02.1: Device Identification Hints (INSERTED)
+
+**Goal:** When an unknown device shows up on the dashboard, the user has an immediate, best-effort idea of what it is (vendor + likely type) without needing to open the register dialog to investigate — and that same guess pre-fills the register form as a starting point the user can freely override.
+**Mode:** mvp
+**Requirements**: DISC-05, DISC-06
+**Depends on:** Phase 2
+**Success Criteria** (what must be TRUE):
+
+  1. An unknown device's card shows an inferred vendor name (e.g. "Apple", "Samsung", "Sonos") derived from its MAC OUI prefix, when a real (non-placeholder) MAC is available
+  2. An unknown device's card shows a best-effort type/category guess (e.g. phone, computer, TV/streaming, smart-home) derived from vendor + mDNS service type + DHCP vendor class, when enough signal exists to guess
+  3. When no reliable signal exists for vendor or type, the card shows plain "Unknown" rather than a fabricated guess
+  4. Opening the Register dialog for an unknown device pre-fills the type field (and name field, when a hostname is available) with the inferred guess — the user can change or clear it before submitting, and the inference is never silently saved as fact
+
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+
 ### Phase 3: Live Traffic + Bandwidth
 
 **Goal**: A user can watch network activity update live without refreshing and explore both per-device and network-wide bandwidth over any time range, with data retained indefinitely by default.

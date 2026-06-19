@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: completed
 stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-06-19T01:37:45.730Z"
+last_updated: "2026-06-19T10:00:40.190Z"
 last_activity: 2026-06-19 -- Phase 02 marked complete
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 2
   total_plans: 8
   completed_plans: 8
-  percent: 25
+  percent: 22
 ---
 
 # Project State
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** See every device on your network and what it's doing, in real time — and be able to act on it.
-**Current focus:** Phase 02 — device-registry-discovery
+**Current focus:** Phase 02.1 — device-identification-hints
 
 ## Current Position
 
