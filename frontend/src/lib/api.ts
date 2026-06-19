@@ -36,3 +36,31 @@ export async function registerDevice(payload: {
 export async function mergeDevice(identityId: number, targetDeviceId: number): Promise<Response> {
   return apiPost(`/api/devices/${identityId}/merge`, { target_device_id: targetDeviceId });
 }
+
+export function openTrafficStream(): EventSource {
+  return new EventSource(`${API_BASE}/api/traffic/stream`, { withCredentials: true });
+}
+
+export async function getDeviceBandwidth(
+  deviceId: number,
+  start: string,
+  end: string
+): Promise<unknown> {
+  const res = await apiGet(
+    `/api/traffic/bandwidth/${deviceId}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+  );
+  if (!res.ok) throw new Error('Failed to load device bandwidth');
+  return res.json();
+}
+
+export async function getNetworkBandwidth(view: 'daily' | 'weekly' | 'monthly'): Promise<unknown> {
+  const res = await apiGet(`/api/traffic/bandwidth/network?view=${view}`);
+  if (!res.ok) throw new Error('Failed to load network bandwidth');
+  return res.json();
+}
+
+export async function getDeviceDestinations(deviceId: number): Promise<unknown> {
+  const res = await apiGet(`/api/traffic/devices/${deviceId}/destinations`);
+  if (!res.ok) throw new Error('Failed to load device destinations');
+  return res.json();
+}
