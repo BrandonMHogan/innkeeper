@@ -213,7 +213,12 @@ async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: As
                 time=payload.interval_end,
                 device_mac=flow.src_mac,
                 dst_ip=flow.dst_ip,
-                dst_port=flow.dst_port,
+                # traffic_flows' composite PK includes dst_port, and Postgres
+                # forces NOT NULL on every PK column — protocols without a
+                # port (ICMP, etc.) must use 0 (not a valid real port) as the
+                # sentinel rather than None, regardless of which
+                # BandwidthSource sent the rollup.
+                dst_port=flow.dst_port if flow.dst_port is not None else 0,
                 protocol=flow.protocol,
                 bytes=flow.bytes,
                 dst_hostname=flow.dst_hostname,

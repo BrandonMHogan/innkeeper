@@ -71,6 +71,37 @@ async def test_traffic_ingest_writes_flow_and_bandwidth_rows(client, test_db):
         assert by_mac["11:22:33:44:55:66"].bytes_tx == 100
 
 
+async def test_traffic_ingest_coerces_null_dst_port_to_zero(client, test_db):
+    """A flow with dst_port=None (e.g. ICMP, which has no port) must not hit
+    traffic_flows' NOT NULL PK constraint on dst_port — the ingest route
+    coerces None to the 0 sentinel before persisting (live-traffic regression:
+    real ICMP packets through capture's traffic_sniff.py surfaced this as a
+    Postgres IntegrityError before the fix)."""
+    payload = {
+        "interval_start": "2026-06-19T12:00:00Z",
+        "interval_end": "2026-06-19T12:00:07Z",
+        "flows": [
+            {
+                "src_mac": "52:55:55:ba:0d:04",
+                "dst_ip": "151.101.0.223",
+                "dst_port": None,
+                "protocol": 1,
+                "bytes": 118,
+                "dst_hostname": None,
+            }
+        ],
+    }
+    response = await client.post("/api/capture/traffic", json=payload)
+    assert response.status_code == 201
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        flow_rows = (await db.execute(select(TrafficFlow))).scalars().all()
+        assert len(flow_rows) == 1
+        assert flow_rows[0].dst_port == 0
+        assert flow_rows[0].protocol == 1
+
+
 async def test_traffic_ingest_rejects_non_loopback(test_db):
     """POST /api/capture/traffic from a non-loopback peer address returns 403,
     matching the existing /arp /dhcp /mdns trust boundary."""

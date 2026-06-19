@@ -133,7 +133,11 @@ def run_traffic_sniff(stop_event: threading.Event) -> None:
                                     dns_cache[socket.inet_ntoa(rr.rdata)] = qname
                     continue
 
-                key = (_mac_str(eth.src), dst_ip, dport, ip.p)
+                # traffic_flows' PK includes dst_port and Postgres forces NOT
+                # NULL on every PK column regardless of the model's nullable=True
+                # — protocols without ports (ICMP, etc.) have dport=None from
+                # dpkt, so substitute 0 (not a valid real port) as the sentinel.
+                key = (_mac_str(eth.src), dst_ip, dport if dport is not None else 0, ip.p)
                 flows[key] = flows.get(key, 0) + len(raw)
             except Exception as exc:  # noqa: BLE001 - a single malformed frame
                 # must never crash the whole sniff thread.
