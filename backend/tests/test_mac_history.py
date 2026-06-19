@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.models.device import Device, DeviceType
 from src.models.device_mac_history import DeviceMacHistory
+from src.services.discovery import record_observation
+from src.services.identity_resolver import Observation
 
 
 async def test_query_all_macs_for_device(test_db):
@@ -85,3 +87,30 @@ async def test_upsert_same_device_mac_pair_no_integrity_error(test_db):
         rows = result.scalars().all()
         assert len(rows) == 1
         assert rows[0].last_seen.replace(tzinfo=timezone.utc) == later_seen
+
+
+async def test_record_observation_writes_mac_history_for_registered_device(test_db):
+    """record_observation's Device-branch fast path upserts a DeviceMacHistory
+    row whenever last_known_mac changes — closes the MAC-rotation blind spot.
+    """
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        device = Device(
+            identity_key="mac:aa:bb:cc:dd:ee:04",
+            name="Rotating Device",
+            owner="tester",
+            type=DeviceType.PHONE,
+            last_known_mac="aa:bb:cc:dd:ee:04",
+        )
+        db.add(device)
+        await db.commit()
+
+        first_seen_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        await record_observation(
+            db,
+            Observation(mac="aa:bb:cc:dd:ee:04", hostname=None, source="arp", observed_at=first_seen_at),
+        )
+
+        result = await db.execute(select(DeviceMacHistory).where(DeviceMacHistory.device_id == device.id))
+        macs = {row.mac for row in result.scalars().all()}
+        assert macs == {"aa:bb:cc:dd:ee:04"}

@@ -6,6 +6,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.device import Device
+from src.models.device_mac_history import DeviceMacHistory
 from src.models.discovered_identity import DiscoveredIdentity
 from src.services.identity_resolver import (
     MDNS_PLACEHOLDER_MAC,
@@ -83,6 +84,46 @@ async def upsert_discovered_identity(
     await db.commit()
 
 
+async def upsert_device_mac_history(
+    db: AsyncSession,
+    device_id: int,
+    mac: str,
+    seen_at: datetime,
+) -> None:
+    """Upsert a DeviceMacHistory row for (device_id, mac) — closes the
+    MAC-rotation blind spot (03-RESEARCH.md Pitfall 1).
+
+    Dialect-aware upsert, same pg_insert/sqlite_insert .on_conflict_do_update()
+    pattern as upsert_discovered_identity above — do not introduce a third
+    upsert style into this file. If a row for this (device_id, mac) pair
+    already exists, updates its last_seen; otherwise inserts a new row with
+    first_seen=last_seen=seen_at.
+    """
+    dialect_name = db.bind.dialect.name if db.bind is not None else db.get_bind().dialect.name
+
+    if dialect_name == "postgresql":
+        stmt = (
+            pg_insert(DeviceMacHistory)
+            .values(device_id=device_id, mac=mac, first_seen=seen_at, last_seen=seen_at)
+            .on_conflict_do_update(
+                index_elements=[DeviceMacHistory.device_id, DeviceMacHistory.mac],
+                set_={"last_seen": seen_at},
+            )
+        )
+    else:
+        stmt = (
+            sqlite_insert(DeviceMacHistory)
+            .values(device_id=device_id, mac=mac, first_seen=seen_at, last_seen=seen_at)
+            .on_conflict_do_update(
+                index_elements=["device_id", "mac"],
+                set_={"last_seen": seen_at},
+            )
+        )
+
+    await db.execute(stmt)
+    await db.commit()
+
+
 async def record_observation(
     db: AsyncSession,
     observation: Observation,
@@ -125,6 +166,7 @@ async def record_observation(
         device.last_known_mac = observation.mac
         device.last_seen = observation.observed_at
         await db.commit()
+        await upsert_device_mac_history(db, device.id, observation.mac, observation.observed_at)
         return
 
     await upsert_discovered_identity(

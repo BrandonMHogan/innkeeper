@@ -17,6 +17,7 @@ dependencies = [
     "httpx",
     "uvloop",
     "mac-vendor-lookup==0.1.15",
+    "tldextract==5.3.0",
 ]
 
 [project.optional-dependencies]
