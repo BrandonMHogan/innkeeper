@@ -107,7 +107,13 @@ async def ingest_dhcp(payload: DhcpEventPayload, request: Request, db: AsyncSess
 
     await record_observation(
         db,
-        Observation(mac=payload.src_mac, hostname=payload.hostname, source="dhcp", observed_at=datetime.now(timezone.utc)),
+        Observation(
+            mac=payload.src_mac,
+            hostname=payload.hostname,
+            source="dhcp",
+            observed_at=datetime.now(timezone.utc),
+            dhcp_vendor_class=payload.vendor_class_id,
+        ),
     )
     return {"ok": True}
 
@@ -145,6 +151,7 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
             hostname=payload.hostname,
             source="mdns",
             observed_at=datetime.now(timezone.utc),
+            mdns_service_type=payload.service_type,
         ),
     )
     return {"ok": True}

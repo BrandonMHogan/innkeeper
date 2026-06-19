@@ -16,6 +16,8 @@ class Observation:
     hostname: str | None
     source: str  # "arp" | "dhcp" | "mdns"
     observed_at: datetime
+    mdns_service_type: str | None = None
+    dhcp_vendor_class: str | None = None
 
 
 class IdentityResolver(Protocol):

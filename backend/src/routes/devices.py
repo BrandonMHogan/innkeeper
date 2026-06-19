@@ -7,6 +7,7 @@ from src.auth import require_auth
 from src.database import get_db
 from src.models.device import Device, DeviceType
 from src.models.discovered_identity import DiscoveredIdentity
+from src.services.identity_inference import infer
 from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC
 
 router = APIRouter()
@@ -39,7 +40,8 @@ def _serialize_device(device: Device) -> dict:
     }
 
 
-def _serialize_identity(identity: DiscoveredIdentity) -> dict:
+async def _serialize_identity(identity: DiscoveredIdentity) -> dict:
+    result = await infer(identity)
     return {
         "id": identity.id,
         "identity_key": identity.identity_key,
@@ -48,6 +50,15 @@ def _serialize_identity(identity: DiscoveredIdentity) -> dict:
         "first_seen": identity.first_seen,
         "last_seen": identity.last_seen,
         "unknown": True,
+        "vendor": result.vendor,
+        "type_guess": result.type_guess.value if result.type_guess else None,
+        "name_guess": result.name_guess,
+        "raw_signals": {
+            "mac": result.raw.mac,
+            "raw_vendor": result.raw.raw_vendor,
+            "mdns_service_type": result.raw.mdns_service_type,
+            "dhcp_vendor_class": result.raw.dhcp_vendor_class,
+        },
     }
 
 
@@ -55,7 +66,7 @@ def _serialize_identity(identity: DiscoveredIdentity) -> dict:
 async def list_devices(_: None = Depends(require_auth), db: AsyncSession = Depends(get_db)):
     devices = (await db.execute(select(Device))).scalars().all()
     identities = (await db.execute(select(DiscoveredIdentity))).scalars().all()
-    return [_serialize_device(d) for d in devices] + [_serialize_identity(i) for i in identities]
+    return [_serialize_device(d) for d in devices] + [await _serialize_identity(i) for i in identities]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

@@ -144,6 +144,75 @@ async def test_record_observation_non_placeholder_mac_still_matches_device(test_
         assert devices[0].identity_key == "host:renamed"
 
 
+async def test_upsert_persists_mdns_dhcp_signals(test_db):
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+
+    # Use a fresh session per phase — selecting mid-session on the same
+    # identity map would return a stale cached instance rather than a
+    # row re-read from the DB, since the upsert's Core on_conflict_do_update
+    # statement bypasses ORM attribute refresh for already-loaded instances.
+    async with session_maker() as db:
+        await record_observation(
+            db,
+            Observation(
+                mac="aa:bb:cc:dd:ee:ff",
+                hostname="signal-device",
+                source="mdns",
+                observed_at=datetime.utcnow(),
+                mdns_service_type="_airplay._tcp",
+            ),
+        )
+
+    async with session_maker() as db:
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].mdns_service_type == "_airplay._tcp"
+        assert rows[0].dhcp_vendor_class is None
+
+    # Upsert overwrites signal columns with each new observation's values
+    # (same overwrite semantics as the existing mac/hostname columns) —
+    # a DHCP-only observation carries no mDNS signal, so this call
+    # correctly clears mdns_service_type while setting dhcp_vendor_class.
+    async with session_maker() as db:
+        await record_observation(
+            db,
+            Observation(
+                mac="aa:bb:cc:dd:ee:ff",
+                hostname="signal-device",
+                source="dhcp",
+                observed_at=datetime.utcnow(),
+                dhcp_vendor_class="dhcpcd-9.4.1:Linux",
+            ),
+        )
+
+    async with session_maker() as db:
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].dhcp_vendor_class == "dhcpcd-9.4.1:Linux"
+
+
+async def test_upsert_arp_only_observation_leaves_signal_columns_none(test_db):
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        await record_observation(
+            db,
+            Observation(
+                mac="aa:bb:cc:dd:ee:ff",
+                hostname=None,
+                source="arp",
+                observed_at=datetime.utcnow(),
+            ),
+        )
+
+        result = await db.execute(select(DiscoveredIdentity))
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].mdns_service_type is None
+        assert rows[0].dhcp_vendor_class is None
+
+
 async def test_concurrent_same_identity_no_duplicate(test_db):
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
     async with session_maker() as db:

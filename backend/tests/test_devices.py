@@ -169,6 +169,29 @@ async def test_unknown_device_listed(client, test_db):
     assert body[0]["unknown"] is True
 
 
+async def test_unknown_identity_includes_inference_payload(client, test_db):
+    await _login(client)
+    await _seed_identity(test_db, mac="B8:E9:37:00:00:01")  # Sonos OUI
+    await _seed_device(test_db)
+
+    response = await client.get("/api/devices/")
+    assert response.status_code == 200
+    body = response.json()
+
+    unknown = next(d for d in body if d["unknown"] is True)
+    assert unknown["vendor"] == "Sonos"
+    assert "type_guess" in unknown
+    assert "name_guess" in unknown
+    assert "raw_signals" in unknown
+    assert set(unknown["raw_signals"].keys()) == {"mac", "raw_vendor", "mdns_service_type", "dhcp_vendor_class"}
+
+    registered = next(d for d in body if d["unknown"] is False)
+    assert "vendor" not in registered
+    assert "type_guess" not in registered
+    assert "name_guess" not in registered
+    assert "raw_signals" not in registered
+
+
 async def test_devices_requires_auth(client):
     response = await client.get("/api/devices/")
     assert response.status_code == 401

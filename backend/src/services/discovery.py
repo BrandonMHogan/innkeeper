@@ -21,6 +21,8 @@ async def upsert_discovered_identity(
     mac: str,
     hostname: str | None,
     seen_at: datetime,
+    mdns_service_type: str | None = None,
+    dhcp_vendor_class: str | None = None,
 ) -> None:
     """Dialect-aware upsert avoiding the select-then-insert race (Pitfall 5).
 
@@ -37,12 +39,20 @@ async def upsert_discovered_identity(
                 identity_key=identity_key,
                 mac=mac,
                 hostname=hostname,
+                mdns_service_type=mdns_service_type,
+                dhcp_vendor_class=dhcp_vendor_class,
                 first_seen=seen_at,
                 last_seen=seen_at,
             )
             .on_conflict_do_update(
                 index_elements=[DiscoveredIdentity.identity_key],
-                set_={"mac": mac, "hostname": hostname, "last_seen": seen_at},
+                set_={
+                    "mac": mac,
+                    "hostname": hostname,
+                    "mdns_service_type": mdns_service_type,
+                    "dhcp_vendor_class": dhcp_vendor_class,
+                    "last_seen": seen_at,
+                },
             )
         )
     else:
@@ -52,12 +62,20 @@ async def upsert_discovered_identity(
                 identity_key=identity_key,
                 mac=mac,
                 hostname=hostname,
+                mdns_service_type=mdns_service_type,
+                dhcp_vendor_class=dhcp_vendor_class,
                 first_seen=seen_at,
                 last_seen=seen_at,
             )
             .on_conflict_do_update(
                 index_elements=["identity_key"],
-                set_={"mac": mac, "hostname": hostname, "last_seen": seen_at},
+                set_={
+                    "mac": mac,
+                    "hostname": hostname,
+                    "mdns_service_type": mdns_service_type,
+                    "dhcp_vendor_class": dhcp_vendor_class,
+                    "last_seen": seen_at,
+                },
             )
         )
 
@@ -94,6 +112,8 @@ async def record_observation(
             mac=observation.mac,
             hostname=observation.hostname,
             seen_at=observation.observed_at,
+            mdns_service_type=observation.mdns_service_type,
+            dhcp_vendor_class=observation.dhcp_vendor_class,
         )
         return
 
@@ -113,4 +133,6 @@ async def record_observation(
         mac=observation.mac,
         hostname=observation.hostname,
         seen_at=observation.observed_at,
+        mdns_service_type=observation.mdns_service_type,
+        dhcp_vendor_class=observation.dhcp_vendor_class,
     )
