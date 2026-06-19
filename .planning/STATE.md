@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 02.1 context gathered
-last_updated: "2026-06-19T10:38:20.071Z"
+stopped_at: Phase 02.1 UI-SPEC amended (D-10 gap closed)
+last_updated: "2026-06-19T10:49:35.433Z"
 last_activity: 2026-06-19 -- Phase 02 marked complete
 progress:
   total_phases: 9
@@ -123,11 +123,11 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-19T10:38:20.067Z
-Stopped at: Phase 02.1 context gathered
+Last session: 2026-06-19T10:49:35.429Z
+Stopped at: Phase 02.1 UI-SPEC amended (D-10 gap closed)
 Resume file: 
 
-.planning/phases/02.1-device-identification-hints/02.1-CONTEXT.md
+.planning/phases/02.1-device-identification-hints/02.1-UI-SPEC.md
 
 D-11 and D-12 (CONTEXT.md, Device List & Unknown-Device UX category) were flagged
 by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
