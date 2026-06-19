@@ -63,7 +63,7 @@ Inherited from Phase 1/2, unchanged — no new sizes or weights. Phase 3 maps on
 
 **New numeric/data convention (not a new typographic role — a formatting rule):** bandwidth byte values are always rendered as **human-readable units** (`B`, `KB`, `MB`, `GB`) at Body weight, never raw byte integers — e.g. `1.4 MB`, not `1468006`. This is a copy/formatting rule layered on the existing Body role, not a new size or weight.
 
-Weights used: 400, 500, 600, 700 (no new weights; Fontsource load list unchanged).
+Weights used: 400, 500, 600, 700 (no new weights; Fontsource load list unchanged). **This 4-weight system is a project-wide inherited convention, not a Phase 3 decision** — it was originally established in `.planning/phases/01-foundation-capture-feasibility/01-UI-SPEC.md` (Typography section, "Weights used: 400, 500, 600, 700. Load only these four weights from Fontsource to minimize bundle.") and explicitly carried forward unchanged by Phase 2 in `.planning/phases/02-device-registry-discovery/02-UI-SPEC.md` ("Inherited from Phase 1 — same 4 declared sizes, same 4 weights, unchanged" / "Weights used: 400, 500, 600, 700 (no new weights; Fontsource load list unchanged)"). Phase 3 introduces **zero new weights** and reuses all four roles (Body/Label/Heading/Display) exactly as inherited — see table above.
 
 ---
 
@@ -139,6 +139,8 @@ All copy here is plain, factual, and avoids exclamation/marketing tone, consiste
 ---
 
 ## Layout
+
+**Primary visual anchor:** the live pulse indicator + "Live Traffic" heading is the primary focal point on first view of this dashboard area, followed by the network-wide bandwidth chart as the secondary anchor — establishing a top-to-bottom reading order of (1) live/real-time status, (2) per-device drill-down (top talkers, active connections, bandwidth history, destinations), (3) aggregate network-wide trend, consistent with the section ordering in the anatomy diagram below.
 
 ### Page/section anatomy (new dashboard area)
 
