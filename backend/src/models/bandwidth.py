@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Float, String, func
+from sqlalchemy import DateTime, Float, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
@@ -16,6 +16,7 @@ class BandwidthMetric(Base):
     __tablename__ = "bandwidth_metrics"
 
     time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
         primary_key=True,

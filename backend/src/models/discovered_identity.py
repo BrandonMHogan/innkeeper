@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
@@ -20,5 +20,5 @@ class DiscoveredIdentity(Base):
     identity_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     mac: Mapped[str] = mapped_column(String(17), nullable=False)
     hostname: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    first_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
-    last_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

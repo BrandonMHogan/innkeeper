@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
@@ -15,4 +15,4 @@ class ArpEvent(Base):
     src_mac: Mapped[str] = mapped_column(String(17), nullable=False)
     src_ip: Mapped[str] = mapped_column(String(45), nullable=False)
     dst_ip: Mapped[str] = mapped_column(String(45), nullable=False)
-    received_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

@@ -2,6 +2,7 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import Boolean
+from sqlalchemy import DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import String, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,8 +31,11 @@ class Device(Base):
     identity_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     owner: Mapped[str] = mapped_column(String(100), nullable=False, default="")
-    type: Mapped[DeviceType] = mapped_column(SAEnum(DeviceType), nullable=False)
+    type: Mapped[DeviceType] = mapped_column(
+        SAEnum(DeviceType, name="devicetype", values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        nullable=False,
+    )
     trusted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     last_known_mac: Mapped[str | None] = mapped_column(String(17), nullable=True)
-    first_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
-    last_seen: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+    first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.models.base import Base
@@ -15,4 +15,4 @@ class MdnsEvent(Base):
     hostname: Mapped[str | None] = mapped_column(String(255), nullable=True)
     service_type: Mapped[str] = mapped_column(String(255), nullable=False)
     addresses: Mapped[str] = mapped_column(String(512), nullable=False)
-    received_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

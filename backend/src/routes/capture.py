@@ -1,5 +1,5 @@
 import socket
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
@@ -84,7 +84,7 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
 
     await record_observation(
         db,
-        Observation(mac=payload.src_mac, hostname=None, source="arp", observed_at=datetime.utcnow()),
+        Observation(mac=payload.src_mac, hostname=None, source="arp", observed_at=datetime.now(timezone.utc)),
     )
     return {"ok": True}
 
@@ -107,7 +107,7 @@ async def ingest_dhcp(payload: DhcpEventPayload, request: Request, db: AsyncSess
 
     await record_observation(
         db,
-        Observation(mac=payload.src_mac, hostname=payload.hostname, source="dhcp", observed_at=datetime.utcnow()),
+        Observation(mac=payload.src_mac, hostname=payload.hostname, source="dhcp", observed_at=datetime.now(timezone.utc)),
     )
     return {"ok": True}
 
@@ -144,7 +144,7 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
             mac=MDNS_PLACEHOLDER_MAC,
             hostname=payload.hostname,
             source="mdns",
-            observed_at=datetime.utcnow(),
+            observed_at=datetime.now(timezone.utc),
         ),
     )
     return {"ok": True}
