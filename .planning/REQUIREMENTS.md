@@ -16,10 +16,10 @@
 
 ### Traffic & Bandwidth (TRAF)
 
-- [ ] **TRAF-01**: User can view a live real-time traffic feed — active connections and top talkers per device, updated via SSE without page refresh
-- [ ] **TRAF-02**: User can view historical bandwidth consumption per device over any time range (data retention is configurable, never auto-deleted by default)
-- [ ] **TRAF-03**: User can view a per-device breakdown of traffic by destination — which domains and IPs each device is communicating with
-- [ ] **TRAF-04**: User can view network-wide bandwidth totals over time as a chart (daily, weekly, monthly views)
+- [x] **TRAF-01**: User can view a live real-time traffic feed — active connections and top talkers per device, updated via SSE without page refresh
+- [x] **TRAF-02**: User can view historical bandwidth consumption per device over any time range (data retention is configurable, never auto-deleted by default)
+- [x] **TRAF-03**: User can view a per-device breakdown of traffic by destination — which domains and IPs each device is communicating with
+- [x] **TRAF-04**: User can view network-wide bandwidth totals over time as a chart (daily, weekly, monthly views)
 
 ### Security (SEC)
 
@@ -143,10 +143,10 @@
 | DISC-02 | Phase 2 | Complete |
 | DISC-03 | Phase 2 | Complete |
 | DISC-04 | Phase 2 | Complete |
-| TRAF-01 | Phase 3 | Pending |
-| TRAF-02 | Phase 3 | Pending |
-| TRAF-03 | Phase 3 | Pending |
-| TRAF-04 | Phase 3 | Pending |
+| TRAF-01 | Phase 3 | Complete |
+| TRAF-02 | Phase 3 | Complete |
+| TRAF-03 | Phase 3 | Complete |
+| TRAF-04 | Phase 3 | Complete |
 | SEC-01 | Phase 4 | Pending |
 | SEC-02 | Phase 4 | Pending |
 | SEC-03 | Phase 4 | Pending |

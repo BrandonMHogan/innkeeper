@@ -119,7 +119,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-03-PLAN.md — Backend: /api/capture/traffic ingest route, SSE broadcaster, historical/destinations/network-wide query routes
+- [x] 03-03-PLAN.md — Backend: /api/capture/traffic ingest route, SSE broadcaster, historical/destinations/network-wide query routes
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -212,7 +212,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
-| 3. Live Traffic + Bandwidth | 2/4 | In Progress|  |
+| 3. Live Traffic + Bandwidth | 3/4 | In Progress|  |
 | 4. Security | 0/TBD | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
