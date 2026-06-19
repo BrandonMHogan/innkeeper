@@ -110,8 +110,20 @@ Plans:
   3. User can see, per device, which domains and IPs that device is communicating with
   4. User can view network-wide bandwidth totals as a chart with daily, weekly, and monthly views
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Backend storage foundation: traffic_flows hypertable, device_mac_history, swappable BandwidthSource interface, domain grouping
+- [ ] 03-02-PLAN.md — Capture container: dpkt WAN traffic sniff loop, 5-tuple aggregation, passive DNS cache
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-03-PLAN.md — Backend: /api/capture/traffic ingest route, SSE broadcaster, historical/destinations/network-wide query routes
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-04-PLAN.md — Frontend: live traffic feed (SSE), bandwidth history chart, destinations breakdown, network-wide chart
 
 ### Phase 4: Security
 
