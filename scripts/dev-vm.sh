@@ -64,7 +64,13 @@ cmd_up() {
   fi
 
   echo "Bringing up docker compose stack inside the VM..."
-  limactl shell "$INSTANCE" -- bash -c "cd '${REPO_MOUNT}' && docker compose up -d --build"
+  # `sg docker -c` (not plain `bash -c`): a freshly-provisioned VM's first
+  # `limactl shell` session predates the docker-group membership the
+  # provisioning script just granted (group changes don't retroactively
+  # apply to an already-established session) — see docs/dev/mac_setup.md
+  # "permission denied" troubleshooting note. `sg docker` activates the
+  # group for this one command without needing a brand-new SSH session.
+  limactl shell "$INSTANCE" -- sg docker -c "cd '${REPO_MOUNT}' && docker compose up -d --build"
 
   local ip
   ip="$(vm_lan_ip)"
@@ -76,7 +82,7 @@ cmd_up() {
 cmd_down() {
   if instance_running; then
     echo "Stopping docker compose stack inside the VM..."
-    limactl shell "$INSTANCE" -- bash -c "cd '${REPO_MOUNT}' && docker compose down" || true
+    limactl shell "$INSTANCE" -- sg docker -c "cd '${REPO_MOUNT}' && docker compose down" || true
     echo "Stopping Lima instance '${INSTANCE}'..."
     limactl stop "$INSTANCE"
   else
@@ -85,7 +91,10 @@ cmd_down() {
 }
 
 cmd_ssh() {
-  exec limactl shell "$INSTANCE" -- bash
+  # sg docker activates the docker group for this session — see the cmd_up
+  # comment above on why a freshly-provisioned VM's session doesn't have it
+  # by default.
+  exec limactl shell "$INSTANCE" -- sg docker -c bash
 }
 
 cmd_status() {
@@ -98,7 +107,7 @@ cmd_status() {
     echo "Bridged LAN IP: ${ip:-<unavailable>}"
     echo
     echo "docker compose ps:"
-    limactl shell "$INSTANCE" -- bash -c "cd '${REPO_MOUNT}' && docker compose ps" || true
+    limactl shell "$INSTANCE" -- sg docker -c "cd '${REPO_MOUNT}' && docker compose ps" || true
   fi
 }
 
