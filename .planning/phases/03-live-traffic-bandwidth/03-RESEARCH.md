@@ -411,19 +411,22 @@ SELECT add_compression_policy('bandwidth_metrics', compress_after => INTERVAL '7
 
 **If this table is empty:** N/A — see entries above; all four assumptions should be confirmed or resolved during planning, particularly A4 which has the highest impact.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `traffic_flows`/`bandwidth_metrics` historical queries aggregate across a device's full MAC history, or only its current `last_known_mac`?**
    - What we know: Phase 2's `IdentityResolver` already tracks MAC rotation for the *discovery* pipeline (`Device.last_known_mac` updates as new MACs are observed via `record_observation`); `bandwidth_metrics` is locked-schema, keyed by `device_mac` directly with no historical MAC-association table.
    - What's unclear: Whether this phase needs to introduce a `device_mac_history` table (or similar) to correctly aggregate bandwidth across MAC rotations, or whether a documented v1 limitation ("bandwidth history may reset when a device's MAC rotates") is acceptable scope for now.
    - Recommendation: The planner should make this an explicit task-level decision with a clear default — recommend introducing a lightweight `device_mac_history` table (device_id, mac, first_seen, last_seen) populated whenever `record_observation`'s Device-branch fast path updates `last_known_mac`, since this is a small addition that closes a real correctness gap and the existing `record_observation` code is the natural place to populate it. If descoped, document the limitation explicitly in REQUIREMENTS.md traceability notes.
+   - **RESOLVED:** Introduced the `device_mac_history` table as recommended. Created in 03-01-PLAN.md Task 1 (model + Alembic migration 0004, alongside `traffic_flows`) and wired in Task 2 (`record_observation`'s Device-branch fast path upserts a `DeviceMacHistory` row on every `last_known_mac` update). Resolved at query time in 03-03-PLAN.md Task 3, where `device_bandwidth` and `device_destinations` both resolve a device's full historical MAC set (via `DeviceMacHistory` union `Device.last_known_mac`) before querying `bandwidth_metrics`/`traffic_flows`, rather than filtering by `last_known_mac` alone.
 
 2. **Should `traffic_flows` use a 5-tuple-based composite primary key, or a synthetic surrogate key?**
    - What we know: TimescaleDB hypertables support composite primary keys that include the time-partitioning column; the existing `bandwidth_metrics` table successfully uses `(time, device_mac)`.
    - What's unclear: Whether a `(time, device_mac, dst_ip, dst_port, protocol)` composite PK is performant/clean enough, or whether high flow cardinality (many distinct dst_ip/port combos per device per interval) makes a synthetic `id` + non-unique index preferable.
    - Recommendation: Start with the composite PK (consistent with `bandwidth_metrics`' existing pattern and CONTEXT.md's discretion note); revisit only if early load-testing surfaces index bloat or write-conflict issues — left as an implementation-time judgment call, not a blocking research gap.
+   - **RESOLVED:** Composite PK retained, consistent with the `bandwidth_metrics` pattern. 03-01-PLAN.md Task 1 defines `TrafficFlow` with primary key `(time, device_mac, dst_ip, dst_port, protocol)` exactly as recommended; no surrogate key was introduced. Revisit only if real-world load-testing surfaces index bloat — not a blocker for this phase.
 
 3. **Exact aggregation/SSE-push interval and rolling top-talkers window** (explicitly Claude's Discretion per CONTEXT.md) — recommend **7 seconds** for the capture/SSE cadence (mid-point of the locked 5-10s range, balances responsiveness against API load) and a **5-minute rolling window** for top-talkers ranking (CONTEXT.md's own example value, smooths bursts without feeling stale).
+   - **RESOLVED:** Both recommended values were adopted. 03-02-PLAN.md Task 1 sets `FLUSH_INTERVAL = 7` (seconds) for the capture aggregation/POST cadence. 03-03-PLAN.md Task 2 matches the same 7-second cadence in `update_snapshot_loop`'s `asyncio.sleep(7)` (per D-11's "same cadence as capture" requirement) and uses a 5-minute rolling window in `_compute_snapshot`'s top-talkers ranking (per D-12).
 
 ## Environment Availability
 
