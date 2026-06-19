@@ -205,4 +205,24 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |
+
+## Backlog
+
+### Phase 999.1: Improve device identification inference (BACKLOG)
+
+**Goal:** [Captured for future planning] — DISC-05/DISC-06's curated 8-vendor OUI list + tiny mDNS service-type map only produces a vendor/type guess for ~2 of 16 real devices on a typical LAN. Needs deeper signals: DHCP vendor-class fingerprinting (deliberately deferred in phase 02.1), hostname heuristics, broader mDNS record parsing, and a strategy for randomized/private MAC addresses (iOS/macOS MAC randomization currently makes vendor lookup a deliberate no-op for those devices — may need alternate signals to identify them at all).
+**Requirements**: TBD
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.2: Dashboard grouping for stale/unidentified devices (BACKLOG)
+
+**Goal:** [Captured for future planning] — Dashboard device list needs activity-based grouping: keep active/recently-active devices as cards at the top; move devices not seen for 6+ hours into a separate, more compact table-style section; devices that remain unidentified after 24 hours should drop off the list entirely.
+**Requirements**: TBD
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
 | 8. Network Visualization | 0/TBD | Not started | - |
