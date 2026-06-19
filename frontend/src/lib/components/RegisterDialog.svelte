@@ -17,10 +17,14 @@
     identityId,
     open = $bindable(false),
     onRegistered,
+    nameGuess = null,
+    typeGuess = null,
   }: {
     identityId: number | null;
     open: boolean;
     onRegistered: () => void;
+    nameGuess?: string | null;
+    typeGuess?: string | null;
   } = $props();
 
   const deviceTypeOptions: { value: string; label: string }[] = [
@@ -35,17 +39,17 @@
     { value: 'other', label: 'Other' },
   ];
 
-  let name = $state('');
+  let name = $state(nameGuess ?? '');
   let owner = $state('');
-  let type = $state<string | undefined>(undefined);
+  let type = $state<string | undefined>(typeGuess ?? undefined);
   let trusted = $state(false);
   let loading = $state(false);
   let errorMessage = $state('');
 
   function resetForm() {
-    name = '';
+    name = nameGuess ?? '';
     owner = '';
-    type = undefined;
+    type = typeGuess ?? undefined;
     trusted = false;
     errorMessage = '';
   }
@@ -94,6 +98,11 @@
       <div>
         <Label for="register-name">Name</Label>
         <Input id="register-name" placeholder="e.g. Brandon's MacBook" bind:value={name} required />
+        {#if nameGuess}
+          <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted); margin: 4px 0 0 0;">
+            Guessed from device signals — feel free to change
+          </p>
+        {/if}
       </div>
 
       <div>
@@ -113,6 +122,11 @@
             {/each}
           </SelectContent>
         </Select>
+        {#if typeGuess}
+          <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted); margin: 4px 0 0 0;">
+            Guessed from device signals — feel free to change
+          </p>
+        {/if}
       </div>
 
       <div style="display: flex; align-items: flex-start; gap: 8px;">

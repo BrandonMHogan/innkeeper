@@ -12,6 +12,9 @@
     name?: string | null;
     type?: string | null;
     last_seen: string;
+    vendor?: string | null;
+    type_guess?: string | null;
+    name_guess?: string | null;
     [key: string]: unknown;
   }
 
@@ -30,6 +33,7 @@
   const existingDevices = $derived(
     registeredDevices.map((d) => ({ id: d.id, name: d.name ?? '' }))
   );
+  const selectedDeviceGuess = $derived(devices.find((d) => d.id === selectedIdentityId));
 
   async function loadDevices() {
     try {
@@ -107,6 +111,8 @@
     identityId={selectedIdentityId}
     bind:open={registerDialogOpen}
     onRegistered={handleRegistered}
+    nameGuess={selectedDeviceGuess?.name_guess ?? null}
+    typeGuess={selectedDeviceGuess?.type_guess ?? null}
   />
   <MergeDialog
     identityId={selectedIdentityId}
