@@ -19,6 +19,8 @@ from scapy.all import ARP, BOOTP, DHCP, Ether, sniff
 from zeroconf import ServiceStateChange, Zeroconf
 from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
 
+from traffic_sniff import run_traffic_sniff
+
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
 
 COMMON_SERVICE_TYPES = [
@@ -175,14 +177,19 @@ def main():
     arp_thread = threading.Thread(target=run_arp_sniff, name="arp-sniff")
     dhcp_thread = threading.Thread(target=run_dhcp_sniff, name="dhcp-sniff")
     mdns_thread = threading.Thread(target=run_mdns_thread, name="mdns-browser")
+    traffic_thread = threading.Thread(
+        target=run_traffic_sniff, args=(stop_event,), name="traffic-sniff"
+    )
 
     mdns_thread.start()
     dhcp_thread.start()
     arp_thread.start()
+    traffic_thread.start()
 
     arp_thread.join()
     dhcp_thread.join()
     mdns_thread.join()
+    traffic_thread.join()
 
     print("[capture] Stopped.")
 
