@@ -86,11 +86,16 @@ Plans:
   3. When no reliable signal exists for vendor or type, the card shows plain "Unknown" rather than a fabricated guess
   4. Opening the Register dialog for an unknown device pre-fills the type field (and name field, when a hostname is available) with the inferred guess — the user can change or clear it before submitting, and the inference is never silently saved as fact
 
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
+**Wave 1**
 
-- [ ] TBD (run /gsd-plan-phase 02.1 to break down)
+- [ ] 02.1-01-PLAN.md — Backend inference engine: schema extension (mdns_service_type/dhcp_vendor_class), identity_inference.py vendor/type-guess logic, /api/devices/ wiring
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02.1-02-PLAN.md — Frontend: inference line + raw-signal info popover on DeviceCard, Register dialog pre-fill
 
 ### Phase 3: Live Traffic + Bandwidth
 
