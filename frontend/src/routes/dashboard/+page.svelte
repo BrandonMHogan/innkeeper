@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { apiGet, listDevices } from '$lib/api';
+  import { apiGet, listDevices, triggerScan } from '$lib/api';
   import DeviceCard from '$lib/components/DeviceCard.svelte';
   import RegisterDialog from '$lib/components/RegisterDialog.svelte';
   import MergeDialog from '$lib/components/MergeDialog.svelte';
@@ -9,6 +9,8 @@
   import BandwidthHistoryChart from '$lib/components/BandwidthHistoryChart.svelte';
   import DestinationsBreakdown from '$lib/components/DestinationsBreakdown.svelte';
   import NetworkBandwidthChart from '$lib/components/NetworkBandwidthChart.svelte';
+  import SecurityAlertsBanner from '$lib/components/SecurityAlertsBanner.svelte';
+  import ScanResultDialog from '$lib/components/ScanResultDialog.svelte';
 
   interface DeviceListItem {
     id: number;
@@ -19,6 +21,8 @@
     vendor?: string | null;
     type_guess?: string | null;
     name_guess?: string | null;
+    security_status?: string | null;
+    last_scanned_at?: string | null;
     [key: string]: unknown;
   }
 
@@ -30,6 +34,9 @@
   let mergeDialogOpen = $state(false);
   let selectedIdentityId = $state<number | null>(null);
 
+  let scanDialogOpen = $state(false);
+  let selectedScanDeviceId = $state<number | null>(null);
+
   const unknownDevices = $derived(devices.filter((d) => d.unknown));
   const registeredDevices = $derived(devices.filter((d) => !d.unknown));
   const sortedDevices = $derived([...unknownDevices, ...registeredDevices]);
@@ -38,6 +45,7 @@
     registeredDevices.map((d) => ({ id: d.id, name: d.name ?? '' }))
   );
   const selectedDeviceGuess = $derived(devices.find((d) => d.id === selectedIdentityId));
+  const selectedScanDevice = $derived(devices.find((d) => d.id === selectedScanDeviceId) ?? null);
 
   let selectedDeviceId = $state<number | null>(null);
 
@@ -89,6 +97,30 @@
   async function handleMerged() {
     await loadDevices();
   }
+
+  async function handleScan(deviceId: number) {
+    const res = await triggerScan(deviceId);
+    if (!res.ok) throw new Error('Failed to trigger scan');
+
+    const priorScannedAt = devices.find((d) => d.id === deviceId)?.last_scanned_at ?? null;
+    const pollStart = Date.now();
+    const pollIntervalMs = 5000;
+    const pollTimeoutMs = 60000;
+
+    const poll = setInterval(async () => {
+      await loadDevices();
+      const current = devices.find((d) => d.id === deviceId);
+      const changed = current && current.last_scanned_at !== priorScannedAt;
+      if (changed || Date.now() - pollStart >= pollTimeoutMs) {
+        clearInterval(poll);
+      }
+    }, pollIntervalMs);
+  }
+
+  function handleShowResults(deviceId: number) {
+    selectedScanDeviceId = deviceId;
+    scanDialogOpen = true;
+  }
 </script>
 
 <svelte:head>
@@ -102,6 +134,8 @@
     </h1>
 
     <LiveTrafficFeed />
+
+    <SecurityAlertsBanner />
 
     {#if registeredDevices.length > 0}
       <section style="margin-bottom: 48px;">
@@ -137,7 +171,13 @@
 
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
       {#each sortedDevices as device (device.id + (device.unknown ? '-unknown' : '-registered'))}
-        <DeviceCard {device} onRegister={handleRegister} onMerge={handleMerge} />
+        <DeviceCard
+          {device}
+          onRegister={handleRegister}
+          onMerge={handleMerge}
+          onScan={handleScan}
+          onShowResults={handleShowResults}
+        />
       {/each}
     </div>
   </main>
@@ -155,4 +195,10 @@
     bind:open={mergeDialogOpen}
     onMerged={handleMerged}
   />
+  {#if selectedScanDevice}
+    <ScanResultDialog
+      device={{ id: selectedScanDevice.id, name: selectedScanDevice.name ?? '' }}
+      bind:open={scanDialogOpen}
+    />
+  {/if}
 {/if}

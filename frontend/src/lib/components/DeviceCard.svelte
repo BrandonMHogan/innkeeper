@@ -29,17 +29,49 @@
       mdns_service_type: string | null;
       dhcp_vendor_class: string | null;
     } | null;
+    security_status?: string | null;
+    last_scanned_at?: string | null;
   }
 
   let {
     device,
     onRegister,
     onMerge,
+    onScan,
+    onShowResults,
   }: {
     device: DeviceCardDevice;
     onRegister: (identityId: number) => void;
     onMerge: (identityId: number) => void;
+    onScan: (deviceId: number) => void | Promise<void>;
+    onShowResults?: (deviceId: number) => void;
   } = $props();
+
+  let scanning = $state(false);
+  let scanError = $state('');
+
+  const securityBadge = $derived.by(() => {
+    const status = device.security_status ?? 'good';
+    if (status === 'critical') {
+      return { label: 'Critical', colorVar: '--color-destructive' };
+    }
+    if (status === 'warning') {
+      return { label: 'Warning', colorVar: '--color-warning' };
+    }
+    return { label: 'Good', colorVar: '--color-good' };
+  });
+
+  async function handleScanClick() {
+    scanError = '';
+    scanning = true;
+    try {
+      await onScan(device.id);
+    } catch {
+      scanError = "Scan couldn't complete";
+    } finally {
+      scanning = false;
+    }
+  }
 
   const typeIconMap: Record<string, typeof HelpCircle> = {
     phone: Smartphone,
@@ -173,20 +205,58 @@
           <span style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-fg);">
             {device.name}
           </span>
+          <span
+            aria-hidden="true"
+            style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {isOnline
+              ? 'var(--color-accent)'
+              : 'var(--color-muted)'};"
+          ></span>
+          <span class="sr-only">{isOnline ? 'Online' : 'Offline'}</span>
         </div>
-        <span
-          aria-hidden="true"
-          style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {isOnline
-            ? 'var(--color-accent)'
-            : 'var(--color-muted)'};"
-        ></span>
-        <span class="sr-only">{isOnline ? 'Online' : 'Offline'}</span>
+        <Badge
+          variant="outline"
+          style="color: var({securityBadge.colorVar}); border-color: var({securityBadge.colorVar});"
+        >
+          {securityBadge.label}
+        </Badge>
       </div>
     </CardHeader>
     <CardContent>
-      <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted); margin: 0;">
+      <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted); margin: 0 0 8px 0;">
         Last seen {formatRelativeTime(device.last_seen)}
       </p>
+      <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-muted); margin: 0 0 16px 0;">
+        {#if device.last_scanned_at}
+          Last scanned {formatRelativeTime(device.last_scanned_at)}
+          {#if onShowResults}
+            <button
+              type="button"
+              onclick={() => onShowResults?.(device.id)}
+              style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-fg); background: none; border: none; padding: 0; margin-left: 8px; cursor: pointer; text-decoration: underline; min-height: 44px; min-width: 44px;"
+            >
+              View results
+            </button>
+          {/if}
+        {:else}
+          Not yet scanned
+        {/if}
+      </p>
+      <div aria-live="polite" style="display: flex; flex-direction: column; gap: 4px;">
+        <Button variant="outline" disabled={scanning} onclick={handleScanClick}>
+          {#if scanning}
+            Scanning…
+          {:else if device.last_scanned_at}
+            Re-scan
+          {:else}
+            Scan
+          {/if}
+        </Button>
+        {#if scanError}
+          <p style="font-size: 14px; font-weight: 400; line-height: 1.5; color: var(--color-destructive); margin: 0;">
+            {scanError}
+          </p>
+        {/if}
+      </div>
     </CardContent>
   </Card>
 {/if}
