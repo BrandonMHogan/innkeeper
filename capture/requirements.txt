@@ -2,3 +2,8 @@ scapy==2.7.0
 httpx
 zeroconf==0.148.0
 dpkt==1.9.8
+# python-nmap (PyPI "python-nmap" is the unmaintained xael.org original and
+# must never be used here — see CLAUDE.md/04-RESEARCH.md). Installed from the
+# home-assistant-libs fork via git, pinned to a commit SHA (not a branch ref)
+# to avoid silent drift if the fork is later updated or abandoned.
+python-nmap @ git+https://github.com/home-assistant-libs/python-nmap@9ac822b56ebbdbf8816e592a1cdb071a2b808f11
