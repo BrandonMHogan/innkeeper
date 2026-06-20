@@ -60,7 +60,11 @@ async def check_bandwidth_anomaly(db: AsyncSession, device_id: int) -> bool:
     baseline_days: set[object] = set()
     for row in rows:
         total_bytes = row.bytes_rx + row.bytes_tx
-        if row.time >= most_recent_window_start:
+        # SQLite (used in tests) returns naive datetimes even for a
+        # DateTime(timezone=True) column; Postgres returns aware ones.
+        # Normalize to aware UTC before comparing against most_recent_window_start.
+        row_time = row.time if row.time.tzinfo else row.time.replace(tzinfo=timezone.utc)
+        if row_time >= most_recent_window_start:
             most_recent_total += total_bytes
         else:
             day_key = row.time.date()
