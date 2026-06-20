@@ -15,11 +15,29 @@
 
   let { deviceId }: { deviceId: number } = $props();
 
+  // `<input type="datetime-local">` always binds a timezone-naive local-time
+  // string (e.g. "2026-06-19T18:30", no offset) — sending that straight to
+  // the backend silently shifts the query window by the user's UTC offset
+  // the moment they touch the input (the initial toISOString() value looks
+  // fine only because it happens to already be in that exact naive shape).
+  // toLocalInputValue()/fromLocalInputValue() keep the input bound to local
+  // wall-clock time while the actual API call always uses a real UTC ISO
+  // string, converted via `new Date(naiveString)` (which the JS Date
+  // constructor correctly interprets as local time when no offset/Z is
+  // present).
+  function toLocalInputValue(date: Date): string {
+    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  }
+  function fromLocalInputValue(value: string): string {
+    return new Date(value).toISOString();
+  }
+
   function defaultStart(): string {
-    return new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    return toLocalInputValue(new Date(Date.now() - 24 * 60 * 60 * 1000));
   }
   function defaultEnd(): string {
-    return new Date().toISOString();
+    return toLocalInputValue(new Date());
   }
 
   let start = $state(defaultStart());
@@ -30,8 +48,8 @@
 
   $effect(() => {
     const currentDeviceId = deviceId;
-    const currentStart = start;
-    const currentEnd = end;
+    const currentStart = fromLocalInputValue(start);
+    const currentEnd = fromLocalInputValue(end);
 
     let cancelled = false;
     async function load() {

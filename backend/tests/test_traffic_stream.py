@@ -186,6 +186,56 @@ async def test_compute_snapshot_excludes_stale_rows_outside_rolling_window(test_
         assert snapshot["top_talkers"][0]["bytes"] == 50
 
 
+async def test_update_snapshot_loop_survives_transient_compute_error(monkeypatch):
+    """update_snapshot_loop must not die for the process lifetime if a single
+    tick's _compute_snapshot raises (e.g. a transient DB error) — every SSE
+    client's live feed depends on this loop running forever (code review
+    finding, live-traffic regression class)."""
+    import asyncio
+
+    import src.services.traffic_broadcaster as broadcaster_module
+
+    call_count = 0
+
+    async def flaky_compute_snapshot(db):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise RuntimeError("transient DB error")
+        return {"top_talkers": [], "active_connections": [], "computed_at": "now"}
+
+    monkeypatch.setattr(broadcaster_module, "_compute_snapshot", flaky_compute_snapshot)
+
+    class _FakeSession:
+        async def __aenter__(self):
+            return None
+
+        async def __aexit__(self, *exc_info):
+            return False
+
+    def fake_session_factory():
+        return _FakeSession()
+
+    stop_event = asyncio.Event()
+
+    async def stop_after_two_ticks():
+        while call_count < 2:
+            await asyncio.sleep(0.01)
+        stop_event.set()
+
+    await asyncio.gather(
+        broadcaster_module.update_snapshot_loop(stop_event, fake_session_factory),
+        stop_after_two_ticks(),
+    )
+
+    assert call_count == 2
+    assert broadcaster_module.get_latest_snapshot() == {
+        "top_talkers": [],
+        "active_connections": [],
+        "computed_at": "now",
+    }
+
+
 async def test_stream_event_generator_yields_one_snapshot_event(monkeypatch):
     """Calling the SSE route's event_generator function directly (mocking
     request.is_disconnected() to return True after the first iteration)

@@ -93,11 +93,20 @@ async def _compute_snapshot(db: AsyncSession) -> dict:
 
 async def update_snapshot_loop(stop_event: asyncio.Event, session_factory) -> None:
     """Background loop started in main.py's lifespan — recomputes the
-    snapshot every 7s (D-11: same cadence as capture's FLUSH_INTERVAL)."""
+    snapshot every 7s (D-11: same cadence as capture's FLUSH_INTERVAL).
+
+    A single transient DB error (e.g. a momentary connection drop) must not
+    permanently kill this loop for the process lifetime — every SSE client's
+    live feed depends on it running forever. Caught and logged so the loop
+    keeps ticking and recovers on the next iteration.
+    """
     global _latest_snapshot
     while not stop_event.is_set():
-        async with session_factory() as db:
-            _latest_snapshot = await _compute_snapshot(db)
+        try:
+            async with session_factory() as db:
+                _latest_snapshot = await _compute_snapshot(db)
+        except Exception as exc:  # noqa: BLE001 - must never crash this loop
+            print(f"[traffic_broadcaster] snapshot computation failed: {exc}")
         try:
             await asyncio.wait_for(stop_event.wait(), timeout=7)
         except asyncio.TimeoutError:
