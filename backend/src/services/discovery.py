@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.device import Device
 from src.models.device_mac_history import DeviceMacHistory
 from src.models.discovered_identity import DiscoveredIdentity
+from src.models.security_alert import SecurityAlert, SecurityAlertType
 from src.services.identity_resolver import (
     MDNS_PLACEHOLDER_MAC,
     HostnameFallbackResolver,
     IdentityResolver,
     Observation,
 )
+from src.services.security_status import SecurityStatus
 
 
 async def upsert_discovered_identity(
@@ -30,8 +32,17 @@ async def upsert_discovered_identity(
     Postgres (production) uses pg_insert().on_conflict_do_update(); SQLite
     (the in-memory test fixture) uses the equivalent sqlite_insert() path —
     both support the same ON CONFLICT DO UPDATE semantics in SQLAlchemy 2.0.
+
+    SEC-02/D-13: a pre-check distinguishes a brand-new identity from an
+    update to an existing one — only the former fires exactly one
+    unknown_device SecurityAlert (device_id=None, since no Device row
+    exists yet for an unregistered identity).
     """
     dialect_name = db.bind.dialect.name if db.bind is not None else db.get_bind().dialect.name
+
+    is_new_identity = (
+        await db.execute(select(DiscoveredIdentity.id).where(DiscoveredIdentity.identity_key == identity_key))
+    ).scalar_one_or_none() is None
 
     if dialect_name == "postgresql":
         stmt = (
@@ -82,6 +93,17 @@ async def upsert_discovered_identity(
 
     await db.execute(stmt)
     await db.commit()
+
+    if is_new_identity:
+        db.add(
+            SecurityAlert(
+                device_id=None,
+                type=SecurityAlertType.UNKNOWN_DEVICE,
+                severity=SecurityStatus.WARNING,
+                message="Unknown device joined the network",
+            )
+        )
+        await db.commit()
 
 
 async def upsert_device_mac_history(

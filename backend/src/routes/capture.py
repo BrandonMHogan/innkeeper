@@ -3,16 +3,25 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.models.arp_event import ArpEvent
+from src.models.device import Device
 from src.models.dhcp_event import DhcpEvent
 from src.models.mdns_event import MdnsEvent
+from src.models.pending_scan_request import PendingScanRequest
+from src.models.port_scan_result import PortScanResult
+from src.models.security_alert import SecurityAlert, SecurityAlertType
 from src.models.traffic_flow import TrafficFlow
+from src.services.bandwidth_anomaly import check_bandwidth_anomaly
 from src.services.bandwidth_source import PassiveCaptureBandwidthSource
 from src.services.discovery import record_observation
 from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
+from src.services.port_rules import evaluate_open_ports
+from src.services.security_status import SecurityStatus, derive_status
+from src.services.threat_intel_source import get_default_threat_intel_source
 
 router = APIRouter()
 
@@ -82,6 +91,15 @@ class TrafficFlowPayload(BaseModel):
     dst_hostname: str | None = None
 
 
+class ScanResultPayload(BaseModel):
+    device_id: int
+    open_ports: list[int]
+
+
+# Mirrors nmap's own top-1000 default scan scope (RESEARCH.md ASVS V5 finding).
+_MAX_OPEN_PORTS = 1000
+
+
 # T-03-08: bound the worst-case write volume a single rollup can cause, in
 # case a misbehaving/compromised capture process sends a pathologically
 # large flow list. Several thousand distinct 5-tuples in one ~7s window is
@@ -110,6 +128,17 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
         db,
         Observation(mac=payload.src_mac, hostname=None, source="arp", observed_at=datetime.now(timezone.utc)),
     )
+
+    # D-?: ARP is the only write path for Device.last_known_ip — gives the
+    # capture container a scan target (Plan 04-03) sourced only from ARP
+    # observations, never DHCP/mDNS.
+    matched_device = (
+        await db.execute(select(Device).where(Device.last_known_mac == payload.src_mac))
+    ).scalar_one_or_none()
+    if matched_device is not None:
+        matched_device.last_known_ip = payload.src_ip
+        await db.commit()
+
     return {"ok": True}
 
 
@@ -238,4 +267,228 @@ async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: As
             observed_at=payload.interval_end,
         )
 
+    # SEC-03: malicious-IP check against every distinct dst_ip in this
+    # rollup. Only registered devices get an alert/status flip — a flow
+    # whose src_mac doesn't match any registered Device is skipped (out of
+    # this phase's scope).
+    threat_intel = get_default_threat_intel_source()
+    seen_hits: set[tuple[int, str]] = set()
+    for flow in payload.flows:
+        if not threat_intel.is_malicious(flow.dst_ip):
+            continue
+
+        device = (
+            await db.execute(select(Device).where(Device.last_known_mac == flow.src_mac))
+        ).scalar_one_or_none()
+        if device is None:
+            continue
+
+        hit_key = (device.id, flow.dst_ip)
+        if hit_key in seen_hits:
+            continue
+        seen_hits.add(hit_key)
+
+        db.add(
+            SecurityAlert(
+                device_id=device.id,
+                type=SecurityAlertType.MALICIOUS_IP,
+                severity=SecurityStatus.CRITICAL,
+                message=f"{device.name} contacted a known-malicious address",
+            )
+        )
+        device.security_status = SecurityStatus.CRITICAL.value
+
+    if seen_hits:
+        await db.commit()
+
     return {"ok": True}
+
+
+@router.post("/scan", status_code=status.HTTP_201_CREATED)
+async def ingest_scan_result(payload: ScanResultPayload, request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Persists a port-scan result and
+    recomputes/persists Device.security_status (SEC-01/D-06)."""
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    if len(payload.open_ports) > _MAX_OPEN_PORTS:
+        raise HTTPException(status_code=413, detail="Scan payload exceeds maximum open-port count")
+
+    device = (await db.execute(select(Device).where(Device.id == payload.device_id))).scalar_one_or_none()
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    db.add(PortScanResult(device_id=device.id, open_ports=payload.open_ports))
+
+    risky_open, unexpected_open = evaluate_open_ports(device.type, payload.open_ports)
+
+    # D-07: each signal source independently contributes — a clean scan
+    # result must not silently clear a prior malicious-IP/bandwidth-anomaly
+    # signal still backed by an unacknowledged alert.
+    has_malicious_ip_match = (
+        await db.execute(
+            select(SecurityAlert).where(
+                SecurityAlert.device_id == device.id,
+                SecurityAlert.type == SecurityAlertType.MALICIOUS_IP,
+                SecurityAlert.acknowledged == False,  # noqa: E712
+            )
+        )
+    ).scalar_one_or_none() is not None
+    has_bandwidth_anomaly = (
+        await db.execute(
+            select(SecurityAlert).where(
+                SecurityAlert.device_id == device.id,
+                SecurityAlert.type == SecurityAlertType.SUSPICIOUS_TRAFFIC,
+                SecurityAlert.acknowledged == False,  # noqa: E712
+            )
+        )
+    ).scalar_one_or_none() is not None
+
+    result = derive_status(
+        risky_open_ports=risky_open,
+        unexpected_open_ports=unexpected_open,
+        has_malicious_ip_match=has_malicious_ip_match,
+        has_bandwidth_anomaly=has_bandwidth_anomaly,
+    )
+    device.security_status = result.value
+    device.last_scanned_at = datetime.now(timezone.utc)
+
+    if unexpected_open:
+        db.add(
+            SecurityAlert(
+                device_id=device.id,
+                type=SecurityAlertType.UNEXPECTED_PORT,
+                severity=SecurityStatus.WARNING,
+                message=f"{device.name} has an unexpected open port",
+            )
+        )
+
+    await db.commit()
+    return {"ok": True}
+
+
+@router.get("/pending-scans")
+async def get_pending_scans(request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Claim-on-read: every returned row's
+    claimed_at is set to now, preventing duplicate delivery to a second poll
+    before the result is POSTed back. Rows whose Device has no
+    last_known_ip yet are left unclaimed so they can be retried once an
+    ARP observation populates the IP."""
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    rows = (
+        (
+            await db.execute(
+                select(PendingScanRequest, Device)
+                .join(Device, Device.id == PendingScanRequest.device_id)
+                .where(PendingScanRequest.claimed_at.is_(None))
+                .where(Device.last_known_ip.is_not(None))
+            )
+        )
+        .all()
+    )
+
+    now = datetime.now(timezone.utc)
+    pending = []
+    for pending_request, device in rows:
+        pending_request.claimed_at = now
+        pending.append({"device_id": pending_request.device_id, "ip": device.last_known_ip})
+
+    if rows:
+        await db.commit()
+
+    return {"pending": pending}
+
+
+@router.post("/queue-daily-scans", status_code=status.HTTP_201_CREATED)
+async def queue_daily_scans(request: Request, db: AsyncSession = Depends(get_db)):
+    """Capture ingest — loopback-only. Queues one PendingScanRequest per
+    registered Device (never discovered_identities/arp_events/etc —
+    RESEARCH.md Pitfall 2), skipping devices that already have an unclaimed
+    request. Independently evaluates check_bandwidth_anomaly() for every
+    registered device and, on a True result with no existing unacknowledged
+    suspicious_traffic alert, writes the alert and recomputes/persists
+    Device.security_status — D-09's bandwidth-anomaly signal is reachable
+    from a real execution path, not only from its own isolated unit test.
+    """
+    client_host = request.client.host if request.client else None
+    if client_host not in _TRUSTED_HOSTS:
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+
+    devices = (await db.execute(select(Device))).scalars().all()
+
+    queued_count = 0
+    for device in devices:
+        existing_unclaimed = (
+            await db.execute(
+                select(PendingScanRequest).where(
+                    PendingScanRequest.device_id == device.id,
+                    PendingScanRequest.claimed_at.is_(None),
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_unclaimed is None:
+            db.add(PendingScanRequest(device_id=device.id))
+            queued_count += 1
+
+        anomaly_detected = await check_bandwidth_anomaly(db, device.id)
+        if not anomaly_detected:
+            continue
+
+        existing_suspicious_alert = (
+            await db.execute(
+                select(SecurityAlert).where(
+                    SecurityAlert.device_id == device.id,
+                    SecurityAlert.type == SecurityAlertType.SUSPICIOUS_TRAFFIC,
+                    SecurityAlert.acknowledged == False,  # noqa: E712
+                )
+            )
+        ).scalar_one_or_none()
+        if existing_suspicious_alert is not None:
+            continue
+
+        db.add(
+            SecurityAlert(
+                device_id=device.id,
+                type=SecurityAlertType.SUSPICIOUS_TRAFFIC,
+                severity=SecurityStatus.WARNING,
+                message=f"{device.name} shows unusually high traffic volume",
+            )
+        )
+
+        latest_scan = (
+            await db.execute(
+                select(PortScanResult)
+                .where(PortScanResult.device_id == device.id)
+                .order_by(PortScanResult.scanned_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if latest_scan is not None:
+            risky_open, unexpected_open = evaluate_open_ports(device.type, latest_scan.open_ports)
+        else:
+            risky_open, unexpected_open = [], []
+
+        has_malicious_ip_match = (
+            await db.execute(
+                select(SecurityAlert).where(
+                    SecurityAlert.device_id == device.id,
+                    SecurityAlert.type == SecurityAlertType.MALICIOUS_IP,
+                    SecurityAlert.acknowledged == False,  # noqa: E712
+                )
+            )
+        ).scalar_one_or_none() is not None
+
+        new_status = derive_status(
+            risky_open_ports=risky_open,
+            unexpected_open_ports=unexpected_open,
+            has_malicious_ip_match=has_malicious_ip_match,
+            has_bandwidth_anomaly=True,
+        )
+        device.security_status = new_status.value
+
+    await db.commit()
+    return {"queued_count": queued_count}

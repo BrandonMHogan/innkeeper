@@ -197,6 +197,19 @@ async def test_devices_requires_auth(client):
     assert response.status_code == 401
 
 
+async def test_list_devices_includes_security_fields(client, test_db):
+    await _login(client)
+    await _seed_device(test_db)
+
+    response = await client.get("/api/devices/")
+    assert response.status_code == 200
+    body = response.json()
+    registered = next(d for d in body if d["unknown"] is False)
+    assert "security_status" in registered
+    assert "last_scanned_at" in registered
+    assert registered["security_status"] == "good"
+
+
 async def test_list_devices_canonical_path_no_redirect(client, test_db):
     """GET /api/devices/ (canonical, trailing slash) returns 200 with no
     redirect; GET /api/devices (no trailing slash, the old broken frontend

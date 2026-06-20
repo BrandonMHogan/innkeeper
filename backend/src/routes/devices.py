@@ -37,6 +37,8 @@ def _serialize_device(device: Device) -> dict:
         "first_seen": device.first_seen,
         "last_seen": device.last_seen,
         "unknown": False,
+        "security_status": device.security_status,
+        "last_scanned_at": device.last_scanned_at,
     }
 
 
