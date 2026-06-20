@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation + Capture Feasibility** - Deployable skeleton, password auth, and a go/no-go capture-topology spike resolving the macOS constraint (completed 2026-06-18)
 - [x] **Phase 2: Device Registry + Discovery** - Multi-source device discovery feeding a registry with named/owned devices and unknown-device detection (completed 2026-06-18)
 - [x] **Phase 3: Live Traffic + Bandwidth** - SSE-powered live traffic feed and per-device + network-wide bandwidth history on TimescaleDB (completed 2026-06-19)
-- [ ] **Phase 4: Security** - Per-device port scans, security status, and alerts for unknown devices and suspicious traffic
+- [x] **Phase 4: Security** - Per-device port scans, security status, and alerts for unknown devices and suspicious traffic (completed 2026-06-20)
 - [ ] **Phase 5: Plugin System + Notifications** - Plugin contract, registry/settings UI, event bus, and the first-party notification plugin
 - [ ] **Phase 6: Dual-Mode + Control** - Travel mode passive scanning, mode switcher with capability-gated UI, auto-degrade, and device blocking
 - [ ] **Phase 7: UniFi + Integrations** - UniFi home-mode adapter, Pi-hole and Grafana plugins, and network-wide domain blocking
@@ -151,7 +151,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion, parallel with each other)*
 
 - [x] 04-03-PLAN.md — Capture container: nmap port-scan listener + daily-rescan trigger, python-nmap fork dependency (human-verify checkpoint)
-- [ ] 04-04-PLAN.md — Frontend: security badge + Scan button on DeviceCard, ScanResultDialog, SecurityAlertsBanner
+- [x] 04-04-PLAN.md — Frontend: security badge + Scan button on DeviceCard, ScanResultDialog, SecurityAlertsBanner
 
 **UI hint**: yes
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
-| 4. Security | 2/4 | In Progress|  |
+| 4. Security | 4/4 | Complete   | 2026-06-20 |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |

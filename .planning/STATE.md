@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 04 Plan 03 (capture-container port scanning) complete
-last_updated: "2026-06-20T13:30:00.000Z"
-last_activity: 2026-06-20 -- Phase 04 Plan 03 (capture-container port scanning) complete
+stopped_at: Phase 04 Plan 04 (frontend security surfaces) complete — Phase 04 (Security) fully complete
+last_updated: "2026-06-20T14:15:00.000Z"
+last_activity: 2026-06-20 -- Phase 04 Plan 04 (frontend security surfaces) complete
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 18
-  completed_plans: 17
-  percent: 40
+  completed_plans: 18
+  percent: 41
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: 04 (security) — EXECUTING
-Plan: 3 of 4 complete
-Status: Executing Phase 04
-Last activity: 2026-06-20 -- Phase 04 Plan 03 (capture-container port scanning) complete
+Phase: 04 (security) — COMPLETE
+Plan: 4 of 4 complete
+Status: Phase 04 complete; ready to plan Phase 05 (Plugin System + Notifications)
+Last activity: 2026-06-20 -- Phase 04 Plan 04 (frontend security surfaces) complete
 
 Progress: [██████████] 100%
 
@@ -111,6 +111,7 @@ Recent decisions affecting current work:
 - [Phase 04 P01]: Plan 04-01 complete — pure-function services (port_rules.py, security_status.py, threat_intel_source.py), vendored FireHOL firehol_level1.netset blocklist (4558 CIDR entries), and the security data layer (Device gains security_status/last_scanned_at/last_known_ip; new port_scan_results/security_alerts/pending_scan_requests tables; migration 0005) all shipped with zero regressions (80/80 backend tests passing). Ran pytest via the pre-existing /tmp/innkeeper-venv313 Python 3.13 venv since no project-local venv exists yet. Device.last_known_ip is schema-only here — Plan 04-02 wires discovery.py's record_observation() to populate it from ARP's src_ip.
 - [Phase 04 P02]: Plan 04-02 complete — new /api/security/* route file (scan-trigger, scan-result read, alerts list/ack/ack-all, all auth-gated), bandwidth_anomaly.py's check_bandwidth_anomaly() (D-09, reused as-is from a prior interrupted attempt after verifying it matched the plan spec exactly), and capture.py extensions (POST /scan ingest, GET /pending-scans claim-on-read poll, POST /queue-daily-scans which both queues PendingScanRequests AND evaluates check_bandwidth_anomaly() per device — closing the gap where D-09's signal was previously unreachable from production). ingest_arp now persists Device.last_known_ip from ARP src_ip; ingest_traffic now checks every dst_ip against the threat-intel blocklist and writes a malicious_ip alert + critical status flip on a hit. discovery.py's upsert_discovered_identity() fires exactly one unknown_device alert per genuinely-new identity (SEC-02). devices.py's serializer gained security_status/last_scanned_at. 108/108 backend tests passing, zero regressions. Plans 04-03 (capture container) and 04-04 (frontend) can now build against this stable API contract.
 - [Phase 04 P03]: Plan 04-03 complete — Task 0 checkpoint (python-nmap dependency source) resolved by orchestrator/user: home-assistant-libs/python-nmap verified legitimate via GitHub API, pinned to commit 9ac822b56ebbdbf8816e592a1cdb071a2b808f11. capture/port_scan.py adds _run_and_post_scan() (top-1000-port -sS SYN scan, swallow-and-continue POST to /api/capture/scan), run_scan_listener() (polls /api/capture/pending-scans every 3s), run_daily_rescan_loop() (sleeps until 03:00 local, pings /api/capture/queue-daily-scans, zero device-selection logic). capture.py now runs six threads total sharing the same stop_event. **Deviation found and fixed**: the plan's literal `python-nmap @ git+https://...` requirements.txt syntax does not install — the fork's own package metadata declares its distribution name as "netmap", not "python-nmap", so pip rejects the named requirement as a mismatch (confirmed live via `pip install` into a venv). Fixed to a bare `git+https://...@<sha>` line with no name prefix; `import nmap` still resolves PortScanner identically. 3/3 new capture-side tests passing (capture/test_port_scan.py, first test infra in capture/); backend full suite re-verified at 108/108, zero regressions (capture is a separate, unaffected runtime). Plan 04-04 (frontend) can proceed independently.
+- [Phase 04 P04]: Plan 04-04 complete — Phase 4 (Security) fully implemented. Frontend gains: DeviceCard's good/warning/critical security badge (never color-only, defaults to "Good" when security_status is null/undefined per D-06) + Scan/Re-scan button (aria-live="polite" "Scanning…" state, inline "Scan couldn't complete" recovery on failure) + a new "View results" affordance; ScanResultDialog (new) sourcing per-port risky/unexpected/expected detail exclusively from getScanResult() -> GET /api/security/scan/{device_id}, never from the device list's rolled-up security_status; SecurityAlertsBanner (new) reading /api/security/alerts, per-row dismiss with no confirmation, "Dismiss all" (2+ alerts) gated behind an AlertDialog confirmation, rendering no DOM when zero alerts exist. Installed shadcn-svelte's first tooltip/alert/alert-dialog components and the project's first --color-good token (green-500, brand-alias-only, distinct from --color-accent's online/live teal-green). Dashboard now renders the alerts banner above the existing Phase 2 summary banner and polls for scan-result freshness after triggering a scan. **Deviation**: added an undocumented-by-plan `onShowResults` prop on DeviceCard — the plan specifies ScanResultDialog and its open/close state but left the "view results" open affordance to executor discretion per the UI-SPEC; without it, a user would have no way to view an existing scan result (only to trigger a brand-new one). svelte-check: 0 errors (3 pre-existing warnings, unrelated). No frontend test runner exists in this project (no vitest/jest) — TDD behavior cases verified via code inspection + svelte-check, consistent with prior phases. Phase 4 (SEC-01..04) is now complete across all 4 plans.
 
 ### Pending Todos
 
@@ -143,14 +144,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-20T13:30:00.000Z
-Stopped at: Phase 04 Plan 03 complete (capture-container port scanning)
+Last session: 2026-06-20T14:15:00.000Z
+Stopped at: Phase 04 Plan 04 complete (frontend security surfaces) — Phase 04 (Security) fully complete
 Resume file:
 
-.planning/phases/04-security/04-03-SUMMARY.md
-by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
-Both features are already implemented and independently verified per
-02-VERIFICATION.md's Required Artifacts table (RegisterDialog.svelte inline form,
-DeviceCard.svelte name/type icon/last-seen/status dot fields) — this is a citation
-gap in the already-executed 02-01/02/03 plans predating the 02-04 gap-closure plan,
-not a missing feature. Overridden — proceeding without replanning shipped UI work.
+.planning/phases/04-security/04-04-SUMMARY.md
