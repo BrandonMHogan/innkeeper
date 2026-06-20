@@ -21,6 +21,7 @@
     type: 'unknown_device' | 'malicious_ip' | 'suspicious_traffic' | 'unexpected_port';
     device_id: number | null;
     device_name?: string | null;
+    message: string;
     created_at: string;
   }
 
@@ -35,19 +36,7 @@
   };
 
   function messageFor(alert: SecurityAlert): string {
-    const name = alert.device_name ?? 'A device';
-    switch (alert.type) {
-      case 'unknown_device':
-        return 'Unknown device joined the network';
-      case 'malicious_ip':
-        return `${name} contacted a known-malicious address`;
-      case 'suspicious_traffic':
-        return `${name} shows unusual traffic activity`;
-      case 'unexpected_port':
-        return `${name} has an unexpected open port`;
-      default:
-        return 'Security alert';
-    }
+    return alert.message ?? 'Security alert';
   }
 
   function formatRelativeTime(isoString: string): string {

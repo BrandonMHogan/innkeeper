@@ -13,10 +13,11 @@ from src.services.port_rules import evaluate_open_ports
 router = APIRouter()
 
 
-def _serialize_alert(alert: SecurityAlert) -> dict:
+def _serialize_alert(alert: SecurityAlert, device_name: str | None = None) -> dict:
     return {
         "id": alert.id,
         "device_id": alert.device_id,
+        "device_name": device_name,
         "type": alert.type,
         "severity": alert.severity,
         "message": alert.message,
@@ -84,18 +85,15 @@ async def get_scan_result(
 
 @router.get("/alerts")
 async def list_alerts(_: None = Depends(require_auth), db: AsyncSession = Depends(get_db)):
-    alerts = (
-        (
-            await db.execute(
-                select(SecurityAlert)
-                .where(SecurityAlert.acknowledged == False)  # noqa: E712
-                .order_by(SecurityAlert.created_at.desc())
-            )
+    rows = (
+        await db.execute(
+            select(SecurityAlert, Device.name)
+            .outerjoin(Device, Device.id == SecurityAlert.device_id)
+            .where(SecurityAlert.acknowledged == False)  # noqa: E712
+            .order_by(SecurityAlert.created_at.desc())
         )
-        .scalars()
-        .all()
-    )
-    return [_serialize_alert(a) for a in alerts]
+    ).all()
+    return [_serialize_alert(alert, device_name) for alert, device_name in rows]
 
 
 @router.post("/alerts/{alert_id}/ack")
