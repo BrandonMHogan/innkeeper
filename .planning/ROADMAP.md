@@ -142,7 +142,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Backend data layer: Device security columns, port_scan_results/security_alerts/pending_scan_requests tables, port_rules/security_status/threat_intel_source pure-function services, vendored FireHOL blocklist
+- [x] 04-01-PLAN.md — Backend data layer: Device security columns, port_scan_results/security_alerts/pending_scan_requests tables, port_rules/security_status/threat_intel_source pure-function services, vendored FireHOL blocklist
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
-| 4. Security | 0/4 | Not started | - |
+| 4. Security | 1/4 | In Progress|  |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |

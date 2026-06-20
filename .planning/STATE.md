@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 04 UI-SPEC approved
-last_updated: "2026-06-20T12:09:46.635Z"
-last_activity: 2026-06-20 -- Phase 04 planning complete
+last_updated: "2026-06-20T12:45:00.000Z"
+last_activity: 2026-06-20 -- Phase 04 Plan 01 (security data layer) complete
 progress:
   total_phases: 11
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
-  percent: 36
+  total_plans: 18
+  completed_plans: 15
+  percent: 38
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** See every device on your network and what it's doing, in real time — and be able to act on it.
-**Current focus:** Phase 03 — live-traffic-bandwidth
+**Current focus:** Phase 04 — security
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-20 -- Phase 04 planning complete
+Phase: 04 (security) — EXECUTING
+Plan: 1 of 4 complete
+Status: Executing Phase 04
+Last activity: 2026-06-20 -- Phase 04 Plan 01 (security data layer) complete
 
 Progress: [██████████] 100%
 
@@ -108,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 03 P04]: Any table with a composite primary key that includes an optional/nullable business field must coerce that field to a sentinel value before insert — Postgres enforces NOT NULL on PK columns regardless of the SQLAlchemy model's nullable declaration; surfaced when dpkt's portless-protocol (ICMP/IGMP) packets carried a null dst_port straight into traffic_flows' composite PK, fixed at both capture/traffic_sniff.py and backend/src/routes/capture.py
 - [Phase 03 P04]: Svelte {#each} block keys must never rely on implicit string-concat of a possibly-undefined field plus a number — `undefined + number` evaluates to NaN (JS numeric addition, not string concatenation) in JS, collapsing every row to the same key and crashing with each_key_duplicate; build keys from explicit template-literal composites of verified-present fields instead. Also: SSE/API payload field names must be verified against the actual backend response shape during live testing, not assumed from plan prose — svelte-check's static typing cannot catch a runtime field-name mismatch against an untyped fetch/EventSource payload
 - [Phase 03]: Phase 03 P04 (03-04) complete — manual verification checkpoint (live SSE behavior, device-picker navigation, tab switching, EventSource reconnect) confirmed passing by user against the real Lima-VM docker-compose stack with live WAN traffic, including after two live-verification bug-fix commits. Phase 3 (TRAF-01..04) fully complete.
+- [Phase 04 P01]: Plan 04-01 complete — pure-function services (port_rules.py, security_status.py, threat_intel_source.py), vendored FireHOL firehol_level1.netset blocklist (4558 CIDR entries), and the security data layer (Device gains security_status/last_scanned_at/last_known_ip; new port_scan_results/security_alerts/pending_scan_requests tables; migration 0005) all shipped with zero regressions (80/80 backend tests passing). Ran pytest via the pre-existing /tmp/innkeeper-venv313 Python 3.13 venv since no project-local venv exists yet. Device.last_known_ip is schema-only here — Plan 04-02 wires discovery.py's record_observation() to populate it from ARP's src_ip.
 
 ### Pending Todos
 
