@@ -12,20 +12,18 @@ See every device on your network and what it's doing, in real time — and be ab
 
 ### Validated
 
-(None yet — ship to validate)
+**Device Visibility** — Validated in Phase 2/3: discovery, registry, dashboard device list, and historical bandwidth on TimescaleDB
+- [x] Discover all devices on the network (IP, MAC, hostname, vendor, last seen)
+- [x] Device registry — user registers known devices (name, owner, type)
+- [x] Live device list on the dashboard showing connected/disconnected state
+- [x] Per-device bandwidth usage (historical, configurable retention, never auto-deleted)
+
+**Live Traffic** — Validated in Phase 3: SSE live traffic feed, per-device destinations, network-wide bandwidth charts
+- [x] Real-time traffic monitoring — active connections and top talkers per device
+- [x] Per-device traffic breakdown by destination (domain/IP)
+- [x] Dashboard updates in real time via SSE
 
 ### Active
-
-**Device Visibility**
-- [ ] Discover all devices on the network (IP, MAC, hostname, vendor, last seen)
-- [ ] Device registry — user registers known devices (name, owner, type)
-- [ ] Live device list on the dashboard showing connected/disconnected state
-- [ ] Per-device bandwidth usage (historical, configurable retention, never auto-deleted)
-
-**Live Traffic**
-- [ ] Real-time traffic monitoring — active connections and top talkers per device
-- [ ] Per-device traffic breakdown by destination (domain/IP)
-- [ ] Dashboard updates in real time via SSE
 
 **Security**
 - [ ] Security scan per device — open ports, known vulnerabilities
@@ -119,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-16 after initialization*
+*Last updated: 2026-06-20 after Phase 3 (Live Traffic + Bandwidth) completion*
