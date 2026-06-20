@@ -45,7 +45,7 @@ def _run_and_post_scan(scanner: nmap.PortScanner, device_id: int, target_ip: str
             open_ports = []
         else:
             tcp_ports = scanner[target_ip].get("tcp", {})
-            open_ports = [port for port, info in tcp_ports.items() if info["state"] == "open"]
+            open_ports = [port for port, info in tcp_ports.items() if info.get("state") == "open"]
 
         payload = {"device_id": device_id, "open_ports": open_ports}
         httpx.post(f"{API_URL}/api/capture/scan", json=payload, timeout=60.0)
