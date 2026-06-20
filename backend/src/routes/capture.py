@@ -364,14 +364,24 @@ async def ingest_scan_result(payload: ScanResultPayload, request: Request, db: A
     device.last_scanned_at = datetime.now(timezone.utc)
 
     if unexpected_open:
-        db.add(
-            SecurityAlert(
-                device_id=device.id,
-                type=SecurityAlertType.UNEXPECTED_PORT,
-                severity=SecurityStatus.WARNING,
-                message=f"{device.name} has an unexpected open port",
+        existing_unexpected_alert = (
+            await db.execute(
+                select(SecurityAlert).where(
+                    SecurityAlert.device_id == device.id,
+                    SecurityAlert.type == SecurityAlertType.UNEXPECTED_PORT,
+                    SecurityAlert.acknowledged == False,  # noqa: E712
+                )
             )
-        )
+        ).scalar_one_or_none()
+        if existing_unexpected_alert is None:
+            db.add(
+                SecurityAlert(
+                    device_id=device.id,
+                    type=SecurityAlertType.UNEXPECTED_PORT,
+                    severity=SecurityStatus.WARNING,
+                    message=f"{device.name} has an unexpected open port",
+                )
+            )
 
     await db.commit()
     return {"ok": True}
