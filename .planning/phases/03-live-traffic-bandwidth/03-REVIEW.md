@@ -40,10 +40,11 @@ files_reviewed_list:
   - frontend/src/routes/dashboard/+page.svelte
 findings:
   critical: 2
+  critical_resolved: 2
   warning: 5
   info: 4
   total: 11
-status: issues_found
+status: critical_resolved
 ---
 
 # Phase 3: Code Review Report
@@ -51,7 +52,7 @@ status: issues_found
 **Reviewed:** 2026-06-20T00:19:51Z
 **Depth:** standard
 **Files Reviewed:** 33
-**Status:** issues_found
+**Status:** critical_resolved — both Critical findings (CR-01, CR-02) fixed in commit `41f1ef5`, with a regression test added for CR-01. Warnings/Info left as follow-up.
 
 ## Summary
 
@@ -67,6 +68,8 @@ In addition, the ingest route performs multiple non-atomic commits per rollup (d
 ## Critical Issues
 
 ### CR-01: `update_snapshot_loop` has no exception handling — a single DB hiccup permanently kills the live feed
+
+**RESOLVED in commit `41f1ef5`** — wrapped the session/compute block in try/except, added `test_update_snapshot_loop_survives_transient_compute_error`.
 
 **File:** `backend/src/services/traffic_broadcaster.py:94-104`
 **Issue:** The background loop that recomputes `_latest_snapshot` every 7 seconds has no `try`/`except` around `_compute_snapshot(db)` or around opening the session. Any transient error — a dropped DB connection, a query timeout, a deadlock, a momentary Postgres restart — propagates out of the `while` loop and terminates the `asyncio.Task` permanently. `main.py`'s lifespan never restarts it. From that point on, `get_latest_snapshot()` returns whatever `_latest_snapshot` was last set to, forever, and `/api/traffic/stream` keeps serving that stale snapshot to every connected/reconnecting client with no error surfaced anywhere (the SSE endpoint itself never errors — it only reads the in-memory dict). The live feed (TRAF-01, the headline feature of this phase) silently and permanently stops updating until the whole API process is restarted.
@@ -87,6 +90,8 @@ async def update_snapshot_loop(stop_event: asyncio.Event, session_factory) -> No
 ```
 
 ### CR-02: `BandwidthHistoryChart.svelte`'s datetime-local inputs break the "any time range" query once a user touches them
+
+**RESOLVED in commit `41f1ef5`** — inputs stay bound to local-time strings; `fromLocalInputValue()` converts to a real UTC ISO string before every API call.
 
 **File:** `frontend/src/lib/components/BandwidthHistoryChart.svelte:25-26,83,87`
 **Issue:** `start`/`end` are initialized to full ISO8601 UTC strings (`defaultStart()`/`defaultEnd()` use `.toISOString()`), but they are bound directly (`bind:value`) to `<Input type="datetime-local">` elements. The native `datetime-local` input's value format is `YYYY-MM-DDTHH:mm` (or `:ss`) with **no timezone/offset information** and in the browser's **local** time, not UTC. The instant a user actually exercises the time-range control — the only UI for TRAF-02's "any time range" requirement — `start`/`end` are overwritten with a timezone-naive, local-time string. That string is then sent verbatim as the `start`/`end` query parameters to `GET /api/traffic/bandwidth/{device_id}`, which FastAPI parses as a naive `datetime`. Comparing a naive datetime against `BandwidthMetric.time` (a `timestamptz` column, always timezone-aware) is ambiguous at best (asyncpg silently treats naive datetimes as the session's local/UTC convention, which will not match the user's actual browser-local intent) and at worst returns wrong/empty results with no error — the query never gets the date range the user actually selected.
