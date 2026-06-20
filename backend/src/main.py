@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.middleware.sessions import SessionMiddleware
 
-from src.routes import auth, capture, devices, traffic
+from src.routes import auth, capture, devices, security, traffic
 from src.services.traffic_broadcaster import update_snapshot_loop
 from src.settings import get_settings
 
@@ -55,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router, prefix="/api/auth")
     app.include_router(capture.router, prefix="/api/capture")
     app.include_router(devices.router, prefix="/api/devices")
+    app.include_router(security.router, prefix="/api/security")
     app.include_router(traffic.router, prefix="/api/traffic")
 
     return app
