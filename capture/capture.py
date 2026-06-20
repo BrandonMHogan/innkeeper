@@ -19,6 +19,7 @@ from scapy.all import ARP, BOOTP, DHCP, Ether, sniff
 from zeroconf import ServiceStateChange, Zeroconf
 from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
 
+from port_scan import run_daily_rescan_loop, run_scan_listener
 from traffic_sniff import run_traffic_sniff
 
 API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000")
@@ -180,16 +181,26 @@ def main():
     traffic_thread = threading.Thread(
         target=run_traffic_sniff, args=(stop_event,), name="traffic-sniff"
     )
+    scan_listener_thread = threading.Thread(
+        target=run_scan_listener, args=(stop_event,), name="scan-listener"
+    )
+    daily_rescan_thread = threading.Thread(
+        target=run_daily_rescan_loop, args=(stop_event,), name="daily-rescan"
+    )
 
     mdns_thread.start()
     dhcp_thread.start()
     arp_thread.start()
     traffic_thread.start()
+    scan_listener_thread.start()
+    daily_rescan_thread.start()
 
     arp_thread.join()
     dhcp_thread.join()
     mdns_thread.join()
     traffic_thread.join()
+    scan_listener_thread.join()
+    daily_rescan_thread.join()
 
     print("[capture] Stopped.")
 
