@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-06-19T22:09:47.121Z"
-last_activity: 2026-06-19 -- Phase 03 execution started
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-06-19T23:59:34.000Z"
+last_activity: 2026-06-19 -- Phase 03 execution complete
 progress:
   total_phases: 11
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 27
+  completed_plans: 14
+  percent: 29
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: 03 (live-traffic-bandwidth) — EXECUTING
+Phase: 03 (live-traffic-bandwidth) — COMPLETE
 Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-06-19 -- Phase 03 execution started
+Status: Phase complete, ready to plan Phase 04 (Security)
+Last activity: 2026-06-19 -- Phase 03 execution complete
 
 Progress: [██████████] 100%
 
@@ -67,6 +67,7 @@ Progress: [██████████] 100%
 | Phase 03 P01 | 25min | 2 tasks | 7 files |
 | Phase 03 P02 | 20min | 2 tasks | 3 files |
 | Phase 03 P03 | 45min | 3 tasks | 10 files |
+| Phase 03 P04 | 102min | 3 tasks (+2 deviation fix commits) | 16 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 03 P03: sse-starlette pinned at 3.4.4 (Task 0 checkpoint approved by user after independent PyPI verification)
 - [Phase ?]: Phase 03 P03: GET /bandwidth/network registered before GET /bandwidth/{device_id} — FastAPI route matching is declaration-order-sensitive
 - [Phase ?]: Phase 03 P03: conftest.py now explicitly imports every model module before Base.metadata.create_all so test_db is self-sufficient regardless of which other fixtures a test uses
+- [Phase 03 P04]: Any table with a composite primary key that includes an optional/nullable business field must coerce that field to a sentinel value before insert — Postgres enforces NOT NULL on PK columns regardless of the SQLAlchemy model's nullable declaration; surfaced when dpkt's portless-protocol (ICMP/IGMP) packets carried a null dst_port straight into traffic_flows' composite PK, fixed at both capture/traffic_sniff.py and backend/src/routes/capture.py
+- [Phase 03 P04]: Svelte {#each} block keys must never rely on implicit string-concat of a possibly-undefined field plus a number — `undefined + number` evaluates to NaN (JS numeric addition, not string concatenation) in JS, collapsing every row to the same key and crashing with each_key_duplicate; build keys from explicit template-literal composites of verified-present fields instead. Also: SSE/API payload field names must be verified against the actual backend response shape during live testing, not assumed from plan prose — svelte-check's static typing cannot catch a runtime field-name mismatch against an untyped fetch/EventSource payload
+- [Phase 03]: Phase 03 P04 (03-04) complete — manual verification checkpoint (live SSE behavior, device-picker navigation, tab switching, EventSource reconnect) confirmed passing by user against the real Lima-VM docker-compose stack with live WAN traffic, including after two live-verification bug-fix commits. Phase 3 (TRAF-01..04) fully complete.
 
 ### Pending Todos
 
@@ -135,8 +139,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-19T22:09:47.117Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-06-19T23:59:34.000Z
+Stopped at: Completed 03-04-PLAN.md (Phase 03 complete)
 Resume file: 
 
 None
