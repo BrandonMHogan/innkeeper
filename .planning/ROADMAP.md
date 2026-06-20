@@ -150,7 +150,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion, parallel with each other)*
 
-- [ ] 04-03-PLAN.md — Capture container: nmap port-scan listener + daily-rescan trigger, python-nmap fork dependency (human-verify checkpoint)
+- [x] 04-03-PLAN.md — Capture container: nmap port-scan listener + daily-rescan trigger, python-nmap fork dependency (human-verify checkpoint)
 - [ ] 04-04-PLAN.md — Frontend: security badge + Scan button on DeviceCard, ScanResultDialog, SecurityAlertsBanner
 
 **UI hint**: yes
