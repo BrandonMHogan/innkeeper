@@ -57,6 +57,15 @@ def _detect_default_gateway() -> str | None:
         return None
 
 
+# Trust boundary: loopback always, plus the detected LAN default gateway.
+# The gateway is included defensively for deployment topologies where the
+# backend container is not on `network_mode: host` and the capture
+# container's traffic can appear to originate from the gateway's address
+# (NAT/hairpin routing, or a reverse proxy in front of the backend). In the
+# common host-network deployment, all real capture traffic is loopback and
+# the gateway branch is simply unused. Every route docstring below
+# describes this boundary as "loopback or detected default gateway" to
+# match this set exactly.
 _default_gateway = _detect_default_gateway()
 _TRUSTED_HOSTS = frozenset(
     {"127.0.0.1", "::1"} | ({_default_gateway} if _default_gateway else set())
@@ -115,10 +124,10 @@ class TrafficRollupPayload(BaseModel):
 
 @router.post("/arp", status_code=status.HTTP_201_CREATED)
 async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Capture never writes directly to the DB."""
+    """Capture ingest — loopback or detected default gateway only. Capture never writes directly to the DB."""
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     event = ArpEvent(src_mac=payload.src_mac, src_ip=str(payload.src_ip), dst_ip=str(payload.dst_ip))
     db.add(event)
@@ -144,10 +153,10 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
 
 @router.post("/dhcp", status_code=status.HTTP_201_CREATED)
 async def ingest_dhcp(payload: DhcpEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Capture never writes directly to the DB."""
+    """Capture ingest — loopback or detected default gateway only. Capture never writes directly to the DB."""
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     event = DhcpEvent(
         src_mac=payload.src_mac,
@@ -173,10 +182,10 @@ async def ingest_dhcp(payload: DhcpEventPayload, request: Request, db: AsyncSess
 
 @router.post("/mdns", status_code=status.HTTP_201_CREATED)
 async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Capture never writes directly to the DB."""
+    """Capture ingest — loopback or detected default gateway only. Capture never writes directly to the DB."""
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     event = MdnsEvent(
         hostname=payload.hostname,
@@ -212,7 +221,7 @@ async def ingest_mdns(payload: MdnsEventPayload, request: Request, db: AsyncSess
 
 @router.post("/traffic", status_code=status.HTTP_201_CREATED)
 async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Capture never writes directly to the DB.
+    """Capture ingest — loopback or detected default gateway only. Capture never writes directly to the DB.
 
     Writes one TrafficFlow row per distinct 5-tuple in the rollup and one
     summed BandwidthMetric row per distinct src_mac, via the swappable
@@ -230,7 +239,7 @@ async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: As
     """
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     if len(payload.flows) > _MAX_FLOWS_PER_ROLLUP:
         raise HTTPException(status_code=413, detail="Rollup payload exceeds maximum flow count")
@@ -306,11 +315,11 @@ async def ingest_traffic(payload: TrafficRollupPayload, request: Request, db: As
 
 @router.post("/scan", status_code=status.HTTP_201_CREATED)
 async def ingest_scan_result(payload: ScanResultPayload, request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Persists a port-scan result and
+    """Capture ingest — loopback or detected default gateway only. Persists a port-scan result and
     recomputes/persists Device.security_status (SEC-01/D-06)."""
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     if len(payload.open_ports) > _MAX_OPEN_PORTS:
         raise HTTPException(status_code=413, detail="Scan payload exceeds maximum open-port count")
@@ -370,14 +379,14 @@ async def ingest_scan_result(payload: ScanResultPayload, request: Request, db: A
 
 @router.get("/pending-scans")
 async def get_pending_scans(request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Claim-on-read: every returned row's
+    """Capture ingest — loopback or detected default gateway only. Claim-on-read: every returned row's
     claimed_at is set to now, preventing duplicate delivery to a second poll
     before the result is POSTed back. Rows whose Device has no
     last_known_ip yet are left unclaimed so they can be retried once an
     ARP observation populates the IP."""
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     rows = (
         (
@@ -405,7 +414,7 @@ async def get_pending_scans(request: Request, db: AsyncSession = Depends(get_db)
 
 @router.post("/queue-daily-scans", status_code=status.HTTP_201_CREATED)
 async def queue_daily_scans(request: Request, db: AsyncSession = Depends(get_db)):
-    """Capture ingest — loopback-only. Queues one PendingScanRequest per
+    """Capture ingest — loopback or detected default gateway only. Queues one PendingScanRequest per
     registered Device (never discovered_identities/arp_events/etc —
     RESEARCH.md Pitfall 2), skipping devices that already have an unclaimed
     request. Independently evaluates check_bandwidth_anomaly() for every
@@ -416,7 +425,7 @@ async def queue_daily_scans(request: Request, db: AsyncSession = Depends(get_db)
     """
     client_host = request.client.host if request.client else None
     if client_host not in _TRUSTED_HOSTS:
-        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
+        raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback or detected default gateway only")
 
     devices = (await db.execute(select(Device))).scalars().all()
 
