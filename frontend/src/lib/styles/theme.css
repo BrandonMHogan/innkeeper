@@ -35,6 +35,9 @@
   --color-warning: #f59e0b;
   --color-warning-fg: #1f2937;
 
+  /* Phase 4 semantic addition: security-status good (green-500, distinct from --color-accent's online/live teal-green) */
+  --color-good: #22c55e;
+
   --radius: 0.5rem;
 }
 
