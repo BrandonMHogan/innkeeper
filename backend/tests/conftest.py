@@ -23,6 +23,9 @@ from src.models import (  # noqa: F401
     dhcp_event,
     discovered_identity,
     mdns_event,
+    pending_scan_request,
+    port_scan_result,
+    security_alert,
     traffic_flow,
 )
 
