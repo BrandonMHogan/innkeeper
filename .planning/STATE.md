@@ -5,12 +5,12 @@ milestone_name: milestone
 status: executing
 stopped_at: Phase 04 UI-SPEC approved
 last_updated: "2026-06-20T12:45:00.000Z"
-last_activity: 2026-06-20 -- Phase 04 Plan 01 (security data layer) complete
+last_activity: 2026-06-20 -- Phase 04 Plan 02 (backend security routes) complete
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 18
-  completed_plans: 15
+  completed_plans: 16
   percent: 38
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 ## Current Position
 
 Phase: 04 (security) — EXECUTING
-Plan: 1 of 4 complete
+Plan: 2 of 4 complete
 Status: Executing Phase 04
-Last activity: 2026-06-20 -- Phase 04 Plan 01 (security data layer) complete
+Last activity: 2026-06-20 -- Phase 04 Plan 02 (backend security routes) complete
 
 Progress: [██████████] 100%
 
@@ -109,6 +109,7 @@ Recent decisions affecting current work:
 - [Phase 03 P04]: Svelte {#each} block keys must never rely on implicit string-concat of a possibly-undefined field plus a number — `undefined + number` evaluates to NaN (JS numeric addition, not string concatenation) in JS, collapsing every row to the same key and crashing with each_key_duplicate; build keys from explicit template-literal composites of verified-present fields instead. Also: SSE/API payload field names must be verified against the actual backend response shape during live testing, not assumed from plan prose — svelte-check's static typing cannot catch a runtime field-name mismatch against an untyped fetch/EventSource payload
 - [Phase 03]: Phase 03 P04 (03-04) complete — manual verification checkpoint (live SSE behavior, device-picker navigation, tab switching, EventSource reconnect) confirmed passing by user against the real Lima-VM docker-compose stack with live WAN traffic, including after two live-verification bug-fix commits. Phase 3 (TRAF-01..04) fully complete.
 - [Phase 04 P01]: Plan 04-01 complete — pure-function services (port_rules.py, security_status.py, threat_intel_source.py), vendored FireHOL firehol_level1.netset blocklist (4558 CIDR entries), and the security data layer (Device gains security_status/last_scanned_at/last_known_ip; new port_scan_results/security_alerts/pending_scan_requests tables; migration 0005) all shipped with zero regressions (80/80 backend tests passing). Ran pytest via the pre-existing /tmp/innkeeper-venv313 Python 3.13 venv since no project-local venv exists yet. Device.last_known_ip is schema-only here — Plan 04-02 wires discovery.py's record_observation() to populate it from ARP's src_ip.
+- [Phase 04 P02]: Plan 04-02 complete — new /api/security/* route file (scan-trigger, scan-result read, alerts list/ack/ack-all, all auth-gated), bandwidth_anomaly.py's check_bandwidth_anomaly() (D-09, reused as-is from a prior interrupted attempt after verifying it matched the plan spec exactly), and capture.py extensions (POST /scan ingest, GET /pending-scans claim-on-read poll, POST /queue-daily-scans which both queues PendingScanRequests AND evaluates check_bandwidth_anomaly() per device — closing the gap where D-09's signal was previously unreachable from production). ingest_arp now persists Device.last_known_ip from ARP src_ip; ingest_traffic now checks every dst_ip against the threat-intel blocklist and writes a malicious_ip alert + critical status flip on a hit. discovery.py's upsert_discovered_identity() fires exactly one unknown_device alert per genuinely-new identity (SEC-02). devices.py's serializer gained security_status/last_scanned_at. 108/108 backend tests passing, zero regressions. Plans 04-03 (capture container) and 04-04 (frontend) can now build against this stable API contract.
 
 ### Pending Todos
 
@@ -142,10 +143,10 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-06-20T11:23:10.824Z
-Stopped at: Phase 04 UI-SPEC approved
+Stopped at: Phase 04 Plan 02 complete (backend security routes)
 Resume file: 
 
-.planning/phases/04-security/04-UI-SPEC.md
+.planning/phases/04-security/04-02-SUMMARY.md
 by the decision coverage gate as uncovered by any PLAN.md must_haves/truths citation.
 Both features are already implemented and independently verified per
 02-VERIFICATION.md's Required Artifacts table (RegisterDialog.svelte inline form,

@@ -146,7 +146,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 04-02-PLAN.md — Backend routes: /api/security/* (scan-trigger, alerts), /api/capture/* extensions (scan ingest, pending-scan poll, daily-rescan queue, malicious-IP check), SEC-02 unknown-device alert hook
+- [x] 04-02-PLAN.md — Backend routes: /api/security/* (scan-trigger, alerts), /api/capture/* extensions (scan ingest, pending-scan poll, daily-rescan queue, malicious-IP check), SEC-02 unknown-device alert hook
 
 **Wave 3** *(blocked on Wave 2 completion, parallel with each other)*
 
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
-| 4. Security | 1/4 | In Progress|  |
+| 4. Security | 2/4 | In Progress|  |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |
