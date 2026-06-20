@@ -23,10 +23,10 @@
 
 ### Security (SEC)
 
-- [ ] **SEC-01**: System can run an open port scan against any device and display results, flagging ports that appear unexpected for that device type
-- [ ] **SEC-02**: System sends a push notification when an unregistered (unknown) device joins the network
-- [ ] **SEC-03**: System detects and alerts when a device connects to a known malicious IP or exhibits suspicious traffic patterns
-- [ ] **SEC-04**: System assigns each device a security status (good / warning / critical) derived from scan results, displayed prominently on the device card
+- [x] **SEC-01**: System can run an open port scan against any device and display results, flagging ports that appear unexpected for that device type
+- [x] **SEC-02**: System sends a push notification when an unregistered (unknown) device joins the network
+- [x] **SEC-03**: System detects and alerts when a device connects to a known malicious IP or exhibits suspicious traffic patterns
+- [x] **SEC-04**: System assigns each device a security status (good / warning / critical) derived from scan results, displayed prominently on the device card
 
 ### Network Control (CTRL)
 
@@ -147,10 +147,10 @@
 | TRAF-02 | Phase 3 | Complete |
 | TRAF-03 | Phase 3 | Complete |
 | TRAF-04 | Phase 3 | Complete |
-| SEC-01 | Phase 4 | Pending |
-| SEC-02 | Phase 4 | Pending |
-| SEC-03 | Phase 4 | Pending |
-| SEC-04 | Phase 4 | Pending |
+| SEC-01 | Phase 4 | Complete |
+| SEC-02 | Phase 4 | Complete |
+| SEC-03 | Phase 4 | Complete |
+| SEC-04 | Phase 4 | Complete |
 | PLUG-01 | Phase 5 | Pending |
 | PLUG-02 | Phase 5 | Pending |
 | PLUG-03 | Phase 5 | Pending |
