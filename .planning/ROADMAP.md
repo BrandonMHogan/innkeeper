@@ -138,7 +138,21 @@ Plans:
   3. System detects and alerts when a device connects to a known malicious IP or shows suspicious traffic patterns
   4. System raises an alert when an unregistered device joins the network (delivery handled once notifications exist)
 
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Backend data layer: Device security columns, port_scan_results/security_alerts/pending_scan_requests tables, port_rules/security_status/threat_intel_source pure-function services, vendored FireHOL blocklist
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — Backend routes: /api/security/* (scan-trigger, alerts), /api/capture/* extensions (scan ingest, pending-scan poll, daily-rescan queue, malicious-IP check), SEC-02 unknown-device alert hook
+
+**Wave 3** *(blocked on Wave 2 completion, parallel with each other)*
+
+- [ ] 04-03-PLAN.md — Capture container: nmap port-scan listener + daily-rescan trigger, python-nmap fork dependency (human-verify checkpoint)
+- [ ] 04-04-PLAN.md — Frontend: security badge + Scan button on DeviceCard, ScanResultDialog, SecurityAlertsBanner
+
 **UI hint**: yes
 
 ### Phase 5: Plugin System + Notifications
@@ -213,7 +227,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation + Capture Feasibility | 3/3 | Complete   | 2026-06-18 |
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
-| 4. Security | 0/TBD | Not started | - |
+| 4. Security | 0/4 | Not started | - |
 | 5. Plugin System + Notifications | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |
