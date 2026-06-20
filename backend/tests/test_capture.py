@@ -11,6 +11,7 @@ from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType
 from src.routes.capture import _detect_default_gateway
+from src.services.security_status import SecurityStatus
 
 
 async def test_arp_ingest(client):
@@ -269,6 +270,37 @@ async def test_scan_ingest_flags_risky_port_and_sets_critical(client, test_db):
 
         device = (await db.execute(select(Device).where(Device.id == device_id))).scalar_one()
         assert device.last_scanned_at is not None
+        assert device.security_status == "critical"
+
+
+async def test_scan_ingest_clean_scan_keeps_status_elevated_with_old_unacked_alert(client, test_db):
+    """WR-04: an old unacknowledged malicious-IP alert must keep
+    Device.security_status elevated even when the newest scan result
+    itself is completely clean (no risky/unexpected ports) — D-07's
+    "each signal source independently contributes" precedent, exercised
+    end-to-end through the real ingest_scan_result route rather than only
+    via derive_status' own unit tests."""
+    device_id = await _seed_device(test_db)
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        db.add(
+            SecurityAlert(
+                device_id=device_id,
+                type=SecurityAlertType.MALICIOUS_IP,
+                severity=SecurityStatus.CRITICAL,
+                message="Old device contacted a known-malicious address",
+                acknowledged=False,
+            )
+        )
+        await db.commit()
+
+    response = await client.post("/api/capture/scan", json={"device_id": device_id, "open_ports": [80]})
+    assert response.status_code == 201
+
+    session_maker = async_sessionmaker(test_db, expire_on_commit=False)
+    async with session_maker() as db:
+        device = (await db.execute(select(Device).where(Device.id == device_id))).scalar_one()
         assert device.security_status == "critical"
 
 
