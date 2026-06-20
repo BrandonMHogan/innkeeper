@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpcap-dev nmap \
+    && apt-get install -y --no-install-recommends libpcap-dev nmap git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -9,7 +9,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY capture.py .
+COPY capture.py port_scan.py traffic_sniff.py .
 
 # No USER directive: Scapy raw-socket capture requires the Python interpreter
 # to run as root inside the container (Python cannot receive file-level
