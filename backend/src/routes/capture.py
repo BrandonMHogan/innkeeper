@@ -2,7 +2,7 @@ import socket
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, IPvAnyAddress
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,8 +65,8 @@ _TRUSTED_HOSTS = frozenset(
 
 class ArpEventPayload(BaseModel):
     src_mac: str
-    src_ip: str
-    dst_ip: str
+    src_ip: IPvAnyAddress
+    dst_ip: IPvAnyAddress
 
 
 class DhcpEventPayload(BaseModel):
@@ -120,7 +120,7 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
     if client_host not in _TRUSTED_HOSTS:
         raise HTTPException(status_code=403, detail="Forbidden — capture ingest is loopback-only")
 
-    event = ArpEvent(src_mac=payload.src_mac, src_ip=payload.src_ip, dst_ip=payload.dst_ip)
+    event = ArpEvent(src_mac=payload.src_mac, src_ip=str(payload.src_ip), dst_ip=str(payload.dst_ip))
     db.add(event)
     await db.commit()
 
@@ -136,7 +136,7 @@ async def ingest_arp(payload: ArpEventPayload, request: Request, db: AsyncSessio
         await db.execute(select(Device).where(Device.last_known_mac == payload.src_mac))
     ).scalar_one_or_none()
     if matched_device is not None:
-        matched_device.last_known_ip = payload.src_ip
+        matched_device.last_known_ip = str(payload.src_ip)
         await db.commit()
 
     return {"ok": True}

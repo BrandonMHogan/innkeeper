@@ -15,6 +15,7 @@ existing POST-per-event, swallow-and-continue error handling convention.
 """
 
 import datetime as dt
+import ipaddress
 import os
 import threading
 
@@ -33,6 +34,11 @@ def _run_and_post_scan(scanner: nmap.PortScanner, device_id: int, target_ip: str
     network POST failure) so the calling loop never crashes — same
     swallow-and-continue philosophy as every other capture POST path."""
     try:
+        try:
+            ipaddress.ip_address(target_ip)  # raises ValueError on anything but a literal IP
+        except ValueError:
+            print(f"[capture] refusing to scan invalid target: {target_ip!r}")
+            return
         scanner.scan(hosts=target_ip, arguments=TOP_PORTS_ARGS)
         if target_ip not in scanner.all_hosts():
             # Host did not respond — treat as "no open ports", not a crash.
