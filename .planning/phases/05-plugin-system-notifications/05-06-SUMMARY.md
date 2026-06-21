@@ -131,3 +131,7 @@ None — `POST /api/modules/{id}/toggle` (T-05-17) is gated by `Depends(require_
 ---
 *Phase: 05-plugin-system-notifications (directory name predates the module-platform pivot; phase content is "Module Platform Foundation" per ROADMAP.md)*
 *Completed: 2026-06-21*
+
+## Self-Check: PASSED
+
+All 6 claimed files (`backend/src/routes/modules.py`, `frontend/src/routes/settings/modules/+page.svelte`, `frontend/src/routes/modules/[slug]/+page.svelte`, `frontend/src/lib/components/ModuleNav.svelte`, `frontend/src/lib/components/ui/switch/switch.svelte`, this SUMMARY.md) verified present on disk. All 3 commit hashes (`0e09f80`, `597a66e`, `3cf7fd7`) verified present in `git log`.
