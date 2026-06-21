@@ -168,7 +168,21 @@ Plans:
   3. Plugins can subscribe to platform events (new_device, device_lost, security_alert, traffic_spike, mode_change) and register background data collectors that feed storage and the event stream
   4. User configures the notification plugin (ntfy.sh or Pushover channel/topic) and receives a push alert on their phone when an unknown device joins
 
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Backend foundation: Plugin Protocol contract, manifest schema + directory-scan loader, EventBus with all five typed event payloads, plugin_configs table
+
+**Wave 2** *(blocked on Wave 1 completion, parallel with each other)*
+
+- [ ] 05-02-PLAN.md — Backend routes: /api/plugins/* (list/enable/config/page), require_plugin_enabled dependency, main.py startup wiring, new_device/traffic_spike publishers, device_lost detector
+- [ ] 05-03-PLAN.md — Notification plugin: manifest + plugin module (new_device subscriber), ntfy.sh/Pushover senders, test-notification route
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-04-PLAN.md — Frontend: /settings/plugins list page, generic /plugins/[slug] page, PluginConfigDialog (schema-driven form, masked secrets, test-send), Switch component
+
 **UI hint**: yes
 
 ### Phase 6: Dual-Mode + Control
