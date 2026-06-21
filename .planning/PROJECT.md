@@ -23,12 +23,12 @@ See every device on your network and what it's doing, in real time — and be ab
 - [x] Per-device traffic breakdown by destination (domain/IP)
 - [x] Dashboard updates in real time via SSE
 
-### Active
+**Security** — Validated in Phase 4: per-device port scans via the capture container, security status derivation, malicious-IP/bandwidth-anomaly alerting, unknown-device alerting (push delivery deferred to Phase 5)
+- [x] Security scan per device — open ports, known vulnerabilities
+- [x] Alert on unknown/unregistered devices joining the network
+- [x] Alert on suspicious traffic patterns or known bad IPs
 
-**Security**
-- [ ] Security scan per device — open ports, known vulnerabilities
-- [ ] Alert on unknown/unregistered devices joining the network
-- [ ] Alert on suspicious traffic patterns or known bad IPs
+### Active
 
 **Control**
 - [ ] Block a device from the network
@@ -117,4 +117,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-20 after Phase 3 (Live Traffic + Bandwidth) completion*
+*Last updated: 2026-06-20 after Phase 4 (Security) completion*
