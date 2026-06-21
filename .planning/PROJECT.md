@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Innkeeper is a self-hosted home network monitoring and management platform. It runs on a local server (Mac Mini or similar) and gives you full visibility into your network — connected devices, live traffic, bandwidth usage per device, and security issues. It operates in two modes: **home mode** (deep router integration for full control) and **travel mode** (passive scanning to secure your own devices on untrusted networks). Designed for a single user/household but architected from day one for open-source distribution and potential commercial use.
+Innkeeper is a self-hosted home-server **module host**: a thin container + dashboard shell that loads isolated modules, each with its own API and data, rather than a fixed feature set with bolt-on plugins. v1 is a home network monitoring and management platform — connected devices, live traffic, bandwidth usage per device, and security issues — built as the first set of native modules on that host. It operates in two modes: **home mode** (deep router integration for full control) and **travel mode** (passive scanning to secure your own devices on untrusted networks). Designed for a single user/household but architected from day one for open-source distribution, potential commercial use, and a v2+ expansion beyond networking (media, cameras, third-party apps) without re-architecting the host.
 
 ## Core Value
 
@@ -57,7 +57,7 @@ See every device on your network and what it's doing, in real time — and be ab
 - Remote access from outside home network — adds security complexity; use a VPN externally
 - Cloud sync or any cloud dependencies for core features — all data stays local
 - Mobile app — the web dashboard works from any phone browser on the network
-- Open plugin marketplace — curated integrations only for v1; community plugins are a future milestone
+- Open module marketplace — curated integrations only for v1; community/third-party modules are a v2+ milestone
 - Support for multiple simultaneous networks — one active network profile at a time
 
 ## Context
@@ -91,12 +91,19 @@ See every device on your network and what it's doing, in real time — and be ab
 | Adapter pattern for router integrations | UniFi first, but architecture is extensible — enables other router brands and open-source contributions without core changes | — Pending |
 | Dual-mode (home/travel) | Home network gives full control via router API; untrusted networks fall back to passive scanning focused on user's own registered devices | — Pending |
 | Docker Compose deployment | Maximum portability; single-command setup; enables open-source adoption without complex install instructions | — Pending |
-| Plugin-first architecture | All integrations (UniFi, Pi-hole, Grafana, ntfy.sh) are implemented as first-party plugins using the plugin contract — proves the system and enables third-party plugins later without architectural changes | — Pending |
-| Plugin UI via dedicated routes | Each plugin gets its own page at /plugins/[name]; no module federation or Svelte rebuild required to add/remove plugins | — Pending |
-| Plugin contract scope | Plugins can: add a UI page, subscribe to platform events, add API routes, register data collectors; they cannot replace core platform components | — Pending |
-| No plugin marketplace in v1 | Config-file + dashboard toggle is sufficient; hosted registry is a future business decision | — Pending |
+| ~~Plugin-first architecture~~ — **superseded 2026-06-21** | Superseded by the module-host pivot below; integrations are first-party native modules, not bolt-on plugins layered over a fixed core | Superseded |
+| ~~Plugin UI via dedicated routes~~ — **superseded 2026-06-21** | Superseded — see "Module UI via dedicated routes" below (same no-module-federation constraint, module terminology) | Superseded |
+| ~~Plugin contract scope: cannot replace core platform components~~ — **superseded 2026-06-21** | Directly contradicted the actual vision: core features (Devices, Traffic, Security) ARE modules, not exempt from the contract. See docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md | Superseded |
+| ~~No plugin marketplace in v1~~ — **superseded 2026-06-21** | Superseded by "No module marketplace in v1" below (same decision, module terminology) | Superseded |
+| Module-host platform (capability Protocols) | Core features (Devices, Traffic, Security) and all integrations are isolated native modules with their own API/data, not a fixed core + bolt-on plugins. Modules are composed via small `typing.Protocol` capabilities (HasAPIRoutes, HasUIPage, etc.) rather than one fat base class — additive evolution, no forced stub methods, scales to 20+ modules | — Pending |
+| Support modules + ModuleRegistry interface resolution | Cross-cutting data (e.g. device identity) lives in support modules exposing a named Protocol (e.g. DeviceLookupInterface); a registry resolves the Protocol to whichever module currently provides it, keyed by type not module identity — so implementations are swappable later with zero consumer changes | — Pending |
+| Per-module Postgres schema isolation | Each module with its own data gets its own Postgres schema and its own Alembic migration branch; a module may only query its own schema, everything else goes through a resolved interface | — Pending |
+| DeviceIdentity as sole source of truth | DeviceIdentity (support module) owns canonical device data/CRUD/merge/inference; Devices (feature module) is a thin UI client of it, keeping its own schema only for UI-owned concerns (sort/search/display prefs) | — Pending |
+| Module UI via dedicated routes | Each module gets its own page at /modules/[name]; no module federation or Svelte rebuild required to add/remove modules | — Pending |
+| Shared frontend design system, convention not runtime-enforced | One CSS-variable token source + one shared shadcn-svelte component library; native modules default to using them (path of least resistance), enforced at UI-spec/review time, not by code — Svelte's default style scoping already prevents cross-module leakage | — Pending |
+| No module marketplace in v1 | Config-file + dashboard toggle is sufficient; hosted registry is a future business decision; linked-module manifest format exists in v1 but the first real third-party module ships in v2 | — Pending |
 | OpenSpec + GSD dual-layer process | GSD manages macro level (phases, requirements, roadmap, verification); OpenSpec manages micro level (per-feature spec → Given/When/Then scenarios → tests → implementation). For each PLAN.md task: `/opsx:propose` first, write tests from scenarios (TDD), implement to pass tests, then `/opsx:sync` + `/opsx:archive`. Specs live in `openspec/` at project root. | — Pending |
-| ntfy.sh / Pushover for push notifications | Lightweight, self-hostable (ntfy.sh), no proprietary push infrastructure required | — Pending |
+| ntfy.sh / Pushover for push notifications | Lightweight, self-hostable (ntfy.sh), no proprietary push infrastructure required; delivered via the Notifications module (Phase 5.2), not a core platform feature | — Pending |
 | UniFi as first router integration target | User's planned router; strong API via aiounifi; large prosumer user base = most impactful first adapter | — Pending |
 
 ## Evolution
@@ -117,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-20 after Phase 4 (Security) completion*
+*Last updated: 2026-06-21 — module platform pivot (see docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md): Phase 5 replaced with Module Platform Foundation, Phases 5.1 (Improve Device Identity) and 5.2 (Notifications) inserted*

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Innkeeper delivers full visibility and control over a home network through a privileged capture engine feeding an unprivileged FastAPI + Svelte stack. The journey starts by resolving the single hardest unknown — whether packet capture is even feasible on the macOS/Docker target — and standing up a deployable, password-protected skeleton. From there the Device Registry keystone is built (everything downstream derives meaning from it), followed by the real-time traffic and bandwidth spine, per-device security, and the plugin system that all integrations ride on. Dual-mode operation (travel/home) lands next so the platform is immediately useful to a router-less user, then the UniFi adapter and curated integrations add deep home control once hardware exists, and finally the topology map and Wake-on-LAN round out the network visualization.
+Innkeeper delivers full visibility and control over a home network through a privileged capture engine feeding an unprivileged FastAPI + Svelte stack. The journey starts by resolving the single hardest unknown — whether packet capture is even feasible on the macOS/Docker target — and standing up a deployable, password-protected skeleton. From there the Device Registry keystone is built (everything downstream derives meaning from it), followed by the real-time traffic and bandwidth spine and per-device security. Phase 5 then retrofits Devices, Traffic, and Security onto a true module-host platform — capability-Protocol contracts, a registry that resolves support interfaces by type so implementations stay swappable, and per-module schema isolation — so the rest of the roadmap (and the eventual v2 expansion into media/cameras/third-party modules) builds on a real foundation instead of bolt-on plugins. Device identification quality is improved next (now isolated and swappable inside its own module), then notifications, dual-mode operation (travel/home), the UniFi adapter and curated integrations, and finally the topology map and Wake-on-LAN round out the network visualization.
 
 ## Phases
 
@@ -17,7 +17,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Device Registry + Discovery** - Multi-source device discovery feeding a registry with named/owned devices and unknown-device detection (completed 2026-06-18)
 - [x] **Phase 3: Live Traffic + Bandwidth** - SSE-powered live traffic feed and per-device + network-wide bandwidth history on TimescaleDB (completed 2026-06-19)
 - [x] **Phase 4: Security** - Per-device port scans, security status, and alerts for unknown devices and suspicious traffic (completed 2026-06-20)
-- [ ] **Phase 5: Plugin System + Notifications** - Plugin contract, registry/settings UI, event bus, and the first-party notification plugin
+- [ ] **Phase 5: Module Platform Foundation** - Module-host infrastructure (registry, event bus, capability protocols) and retrofit of Devices/Traffic/Security onto isolated, swappable modules
+- [ ] **Phase 5.1: Improve Device Identity** (INSERTED) - Deeper inference (hostname heuristics, broader mDNS parsing, MAC-randomization handling) inside the now-isolated DeviceIdentity module
+- [ ] **Phase 5.2: Notifications** (INSERTED) - First-party notification module (ntfy.sh/Pushover) built clean on the new module contract
 - [ ] **Phase 6: Dual-Mode + Control** - Travel mode passive scanning, mode switcher with capability-gated UI, auto-degrade, and device blocking
 - [ ] **Phase 7: UniFi + Integrations** - UniFi home-mode adapter, Pi-hole and Grafana plugins, and network-wide domain blocking
 - [ ] **Phase 8: Network Visualization** - Interactive topology map and Wake-on-LAN from the dashboard
@@ -155,34 +157,52 @@ Plans:
 
 **UI hint**: yes
 
-### Phase 5: Plugin System + Notifications
+### Phase 5: Module Platform Foundation
 
-**Goal**: A user can manage integrations as plugins through the dashboard, and the platform can deliver push alerts — proving the plugin contract end-to-end with the notification plugin as the first consumer.
+**Goal**: Devices, Traffic, and Security — already built as core-app code in Phases 1-4 — are retrofitted into isolated, independently-replaceable modules on a real module-host platform, proving the platform supports both first-party native modules and (eventually) third-party linked modules before any further feature work proceeds.
 **Mode:** mvp
 **Depends on**: Phase 4
-**Requirements**: PLUG-01, PLUG-02, PLUG-03, PLUG-04, PLUG-05, FPLG-04
+**Requirements**: MOD-01, MOD-02, MOD-03, MOD-04, MOD-05, MOD-06, MOD-07, MOD-08
 **Success Criteria** (what must be TRUE):
 
-  1. A documented plugin contract exists (manifest, optional API routes, event subscriptions, data collectors, UI page route)
-  2. User can view, enable, disable, and configure plugins from the dashboard settings page, and an enabled plugin with a UI page appears at /plugins/[plugin-name] with no core rebuild
-  3. Plugins can subscribe to platform events (new_device, device_lost, security_alert, traffic_spike, mode_change) and register background data collectors that feed storage and the event stream
-  4. User configures the notification plugin (ntfy.sh or Pushover channel/topic) and receives a push alert on their phone when an unknown device joins
+  1. A documented module contract exists: capability Protocols (HasAPIRoutes, HasUIPage, HasEventSubscriptions, HasCollector), a typed ModuleManifest (id, kind, provides, requires, db_schema), and a ModuleLoader that topologically sorts and instantiates modules via constructor injection
+  2. A ModuleRegistry resolves support interfaces (e.g. DeviceLookupInterface) by Protocol type rather than module identity, so a provider can be swapped later without touching any consumer; the loader fails fast at startup on an unsatisfied `requires` or a `provides` conflict
+  3. DeviceIdentity exists as a support module (its own Postgres schema) — sole source of truth for device data, CRUD, merge, and inference, exposing DeviceLookupInterface; Devices, Traffic, and Security are retrofitted to call it instead of owning or duplicating device data
+  4. Devices is a thin feature module (dashboard card grid, register/merge dialogs) that performs every device read/write through DeviceIdentity, keeping its own schema only for UI-owned concerns (sort order, search history, display prefs)
+  5. A shared frontend design-token source and shared component library exist and are used by the retrofitted Devices/Traffic/Security UI, proving the "use ours by default, opt out if needed" convention holds across modules
+  6. A linked-module manifest format and a "Linked Apps" dashboard section exist (data model + empty-state UI only — no real third-party module ships this phase)
 
-**Plans**: 4 plans
-Plans:
-**Wave 1**
+**Plans**: TBD — supersedes the 4 plans originally drafted in `05-01` through `05-04-PLAN.md` (built against the retired bolt-on plugin contract; see `.planning/phases/05-plugin-system-notifications/`)
+**UI hint**: yes
 
-- [ ] 05-01-PLAN.md — Backend foundation: Plugin Protocol contract, manifest schema + directory-scan loader, EventBus with all five typed event payloads, plugin_configs table
+### Phase 5.1: Improve Device Identity (INSERTED)
 
-**Wave 2** *(blocked on Wave 1 completion, parallel with each other)*
+**Goal**: Now that device identification logic is isolated in its own DeviceIdentity module, materially improve its accuracy — today's curated 8-vendor OUI list + tiny mDNS service-type map only produces a usable guess for ~2 of 16 real devices on a typical LAN.
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: DISC-07, DISC-08
+**Success Criteria** (what must be TRUE):
 
-- [ ] 05-02-PLAN.md — Backend routes: /api/plugins/* (list/enable/config/page), require_plugin_enabled dependency, main.py startup wiring, new_device/traffic_spike publishers, device_lost detector
-- [ ] 05-03-PLAN.md — Notification plugin: manifest + plugin module (new_device subscriber), ntfy.sh/Pushover senders, test-notification route
+  1. DeviceIdentity uses DHCP vendor-class fingerprinting, hostname heuristics, and broader mDNS record parsing (beyond the Phase 2.1 curated map) to materially raise the fraction of unknown devices that get a non-"Unknown" vendor/type guess
+  2. DeviceIdentity has a documented strategy for randomized/private MAC addresses (iOS/macOS MAC randomization) — either an alternate signal that identifies the device, or an explicit, visible "can't identify by MAC" state rather than a silent no-op
+  3. Every consumer of DeviceLookupInterface (Devices, Traffic, Security) gets improved results automatically, with no code changes required outside the DeviceIdentity module itself — the swappability promise from Phase 5 holds in practice
 
-**Wave 3** *(blocked on Wave 2 completion)*
+**Plans**: TBD
+**UI hint**: no
 
-- [ ] 05-04-PLAN.md — Frontend: /settings/plugins list page, generic /plugins/[slug] page, PluginConfigDialog (schema-driven form, masked secrets, test-send), Switch component
+### Phase 5.2: Notifications (INSERTED)
 
+**Goal**: The platform can deliver push alerts to the user's phone — the first module built clean on the new module contract, with no retrofit baggage, closing the notification-delivery gap left open since Phase 4's unknown-device alerting.
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: FMOD-04
+**Success Criteria** (what must be TRUE):
+
+  1. User configures the notification module (ntfy.sh or Pushover channel/topic) from the dashboard settings page
+  2. User receives a push alert on their phone when an unknown device joins the network, closing SEC-02/SEC-04's deferred delivery gap
+  3. The notification module subscribes to platform events via the EventBus rather than being special-cased into Security/Devices code
+
+**Plans**: TBD
 **UI hint**: yes
 
 ### Phase 6: Dual-Mode + Control
@@ -234,7 +254,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -242,21 +262,14 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
 | 4. Security | 4/4 | Complete    | 2026-06-20 |
-| 5. Plugin System + Notifications | 0/TBD | Not started | - |
+| 5. Module Platform Foundation | 0/TBD | Not started | - |
+| 5.1. Improve Device Identity (INSERTED) | 0/TBD | Not started | - |
+| 5.2. Notifications (INSERTED) | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
 | 7. UniFi + Integrations | 0/TBD | Not started | - |
+| 8. Network Visualization | 0/TBD | Not started | - |
 
 ## Backlog
-
-### Phase 999.1: Improve device identification inference (BACKLOG)
-
-**Goal:** [Captured for future planning] — DISC-05/DISC-06's curated 8-vendor OUI list + tiny mDNS service-type map only produces a vendor/type guess for ~2 of 16 real devices on a typical LAN. Needs deeper signals: DHCP vendor-class fingerprinting (deliberately deferred in phase 02.1), hostname heuristics, broader mDNS record parsing, and a strategy for randomized/private MAC addresses (iOS/macOS MAC randomization currently makes vendor lookup a deliberate no-op for those devices — may need alternate signals to identify them at all).
-**Requirements**: TBD
-**Plans**: 0 plans
-
-Plans:
-
-- [ ] TBD (promote with /gsd-review-backlog when ready)
 
 ### Phase 999.2: Dashboard grouping for stale/unidentified devices (BACKLOG)
 
@@ -267,5 +280,3 @@ Plans:
 Plans:
 
 - [ ] TBD (promote with /gsd-review-backlog when ready)
-
-| 8. Network Visualization | 0/TBD | Not started | - |

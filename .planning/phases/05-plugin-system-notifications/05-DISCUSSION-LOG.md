@@ -1,5 +1,8 @@
 # Phase 5: Plugin System + Notifications - Discussion Log
 
+> **SUPERSEDED 2026-06-21** — built against the retired bolt-on plugin contract. See `docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md` and the new Phase 5 (Module Platform Foundation) in ROADMAP.md. Kept for history only; do not use as input to planning or execution.
+
+
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 

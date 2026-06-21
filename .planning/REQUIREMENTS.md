@@ -13,6 +13,8 @@
 - [x] **DISC-04**: System detects when an unregistered device joins the network and marks it as unknown
 - [x] **DISC-05**: System infers a likely vendor (e.g. "Apple", "Samsung", "Sonos") for an unknown device from its MAC OUI prefix, and displays it on the unknown-device card — a best-effort hint, not a registry field, since the user may override or ignore it
 - [x] **DISC-06**: System infers a likely device type/category (e.g. phone, computer, TV/streaming, smart-home) for an unknown device from available signals (vendor, mDNS service type, DHCP vendor class) and pre-fills the register form's type/name fields with the best guess — the user can always change or reject the suggestion before registering
+- [ ] **DISC-07**: DeviceIdentity uses DHCP vendor-class fingerprinting, hostname heuristics, and broader mDNS record parsing (beyond DISC-05/06's curated map) to materially raise the fraction of unknown devices that get a non-"Unknown" vendor/type guess
+- [ ] **DISC-08**: DeviceIdentity has a documented strategy for randomized/private MAC addresses (iOS/macOS MAC randomization) — an alternate identifying signal, or an explicit "can't identify by MAC" state rather than a silent no-op
 
 ### Traffic & Bandwidth (TRAF)
 
@@ -45,22 +47,25 @@
 - [ ] **VIZ-01**: User can view an interactive network topology map — a visual graph showing all discovered devices, their connections, and security status
 - [ ] **VIZ-02**: User can send a Wake-on-LAN magic packet to any registered device that supports it, directly from the dashboard
 
-### Plugin System (PLUG)
+### Module Platform (MOD)
 
-- [ ] **PLUG-01**: Plugin contract is defined and documented — a plugin consists of: a manifest (name, version, author, required capabilities), optional API routes, optional event subscriptions, optional data collectors, and an optional UI page route
-- [ ] **PLUG-02**: User can view all available plugins, and enable, disable, or configure each one via the dashboard settings page
-- [ ] **PLUG-03**: Plugins can subscribe to platform events — `new_device`, `device_lost`, `security_alert`, `traffic_spike`, `mode_change` — and react accordingly (send a notification, log, trigger a scan, etc.)
-- [ ] **PLUG-04**: An enabled plugin with a UI page appears as a navigation entry in the dashboard at `/plugins/[plugin-name]`; the core platform requires no rebuild when plugins are toggled
-- [ ] **PLUG-05**: Plugins can register data collectors — background tasks that feed new data (e.g. speedtest results, external threat feeds) into Innkeeper's storage and event stream
+- [ ] **MOD-01**: Module contract is defined and documented — capability Protocols (HasAPIRoutes, HasUIPage, HasEventSubscriptions, HasCollector), a typed ModuleManifest (id, kind: feature/support/linked, provides, requires, db_schema), and a ModuleLoader that wires modules via constructor injection
+- [ ] **MOD-02**: User can view all available modules, and enable, disable, or configure each one via the dashboard settings page
+- [ ] **MOD-03**: Modules can subscribe to platform events — `new_device`, `device_lost`, `security_alert`, `traffic_spike`, `mode_change` — via the EventBus and react accordingly
+- [ ] **MOD-04**: An enabled module with a UI page appears as a navigation entry in the dashboard at `/modules/[module-name]`; the core platform requires no rebuild when modules are toggled
+- [ ] **MOD-05**: Modules can register data collectors — background tasks that feed new data into Innkeeper's storage and event stream
+- [ ] **MOD-06**: A ModuleRegistry resolves support interfaces (e.g. DeviceLookupInterface) by Protocol type rather than module identity, so a provider can be replaced later without changing any consumer; the loader fails fast at startup if a `requires` is unsatisfied or two modules `provide` the same interface
+- [ ] **MOD-07**: Devices, Traffic, and Security are retrofitted onto the module contract: DeviceIdentity becomes a support module (own Postgres schema, sole source of truth for device data/CRUD/merge/inference, exposes DeviceLookupInterface); Devices/Traffic/Security consume it instead of owning or duplicating device data
+- [ ] **MOD-08**: A linked-module manifest format and dashboard "Linked Apps" section exist (data model + UI only — no real third-party module ships in v1)
 
-### First-Party Plugins (FPLG)
+### First-Party Modules (FMOD)
 
-*These are plugins that use the plugin contract exactly as third-party plugins would — they prove the system works.*
+*These are modules that use the module contract exactly as third-party modules would — they prove the system works.*
 
-- [ ] **FPLG-01**: UniFi router adapter plugin — connects to a UniFi controller, exposes capabilities: device list, per-client bandwidth counters, block device, unblock device; degrades gracefully when controller is unreachable
-- [ ] **FPLG-02**: Pi-hole integration plugin — connects to a Pi-hole instance, exposes capabilities: block domain, unblock domain, query stats dashboard page
-- [ ] **FPLG-03**: Grafana integration plugin — exposes Innkeeper's PostgreSQL as a Grafana data source; provides a plugin page with a link to the Grafana instance; requires no custom Grafana plugin
-- [ ] **FPLG-04**: Notification plugin — delivers push alerts via ntfy.sh or Pushover; user configures the channel and topic in plugin settings; other plugins and the core platform send alerts through this plugin
+- [ ] **FMOD-01**: UniFi router adapter module — connects to a UniFi controller, exposes capabilities: device list, per-client bandwidth counters, block device, unblock device; degrades gracefully when controller is unreachable
+- [ ] **FMOD-02**: Pi-hole integration module — connects to a Pi-hole instance, exposes capabilities: block domain, unblock domain, query stats dashboard page
+- [ ] **FMOD-03**: Grafana integration module — exposes Innkeeper's PostgreSQL as a Grafana data source; provides a module page with a link to the Grafana instance; requires no custom Grafana plugin
+- [ ] **FMOD-04**: Notification module — delivers push alerts via ntfy.sh or Pushover; user configures the channel and topic in module settings; other modules and the core platform send alerts through it
 
 ### Authentication (AUTH)
 
@@ -115,13 +120,13 @@
 | Remote access from outside home network | Adds significant security surface; users should use a VPN (e.g. Tailscale) for remote access — potential v2 integration |
 | Cloud sync / telemetry | All data stays local; no cloud dependencies for any core feature — non-negotiable for self-hosted trust |
 | Native mobile app | Web dashboard works from any phone browser on the network; native app is a separate product |
-| Plugin marketplace / registry | Config-based plugin management is sufficient for v1; a hosted registry is a future business decision |
+| Module marketplace / registry | Config-based module management is sufficient for v1; a hosted registry is a future business decision |
 | Automatic data deletion | User's choice is "never auto-delete" — retention is configurable but default is keep forever |
 | `--privileged` Docker containers | Security tool must not be an attack surface; `CAP_NET_RAW` + `CAP_NET_ADMIN` only |
 | Full DPI (deep packet inspection) | Per-payload inspection is legally complex, privacy-invasive, and high-performance-cost; flow-level accounting is sufficient |
 | DHCP / DNS server (built-in) | Innkeeper reads from DHCP/DNS; it should not become the network's DHCP/DNS server — too much blast radius |
 | Multi-network simultaneous management | One active network profile at a time; multi-network is a v2+ architectural extension |
-| Module federation for plugin UI | Svelte compile-time constraint; dedicated routes are sufficient for v1 |
+| Module federation for module UI | Svelte compile-time constraint; dedicated routes are sufficient for v1 |
 | Multiple user accounts / RBAC | Single shared password is sufficient for v1 personal use; multi-user with role-based access is v2 |
 | Auto-quarantine / NAC | Network Access Control is complex, error-prone, and high blast radius; manual block is sufficient for v1 |
 
@@ -151,30 +156,35 @@
 | SEC-02 | Phase 4 | Complete |
 | SEC-03 | Phase 4 | Complete |
 | SEC-04 | Phase 4 | Complete |
-| PLUG-01 | Phase 5 | Pending |
-| PLUG-02 | Phase 5 | Pending |
-| PLUG-03 | Phase 5 | Pending |
-| PLUG-04 | Phase 5 | Pending |
-| PLUG-05 | Phase 5 | Pending |
-| FPLG-04 | Phase 5 | Pending |
+| MOD-01 | Phase 5 | Pending |
+| MOD-02 | Phase 5 | Pending |
+| MOD-03 | Phase 5 | Pending |
+| MOD-04 | Phase 5 | Pending |
+| MOD-05 | Phase 5 | Pending |
+| MOD-06 | Phase 5 | Pending |
+| MOD-07 | Phase 5 | Pending |
+| MOD-08 | Phase 5 | Pending |
+| DISC-07 | Phase 5.1 | Pending |
+| DISC-08 | Phase 5.1 | Pending |
+| FMOD-04 | Phase 5.2 | Pending |
 | MODE-02 | Phase 6 | Pending |
 | MODE-03 | Phase 6 | Pending |
 | MODE-04 | Phase 6 | Pending |
 | CTRL-01 | Phase 6 | Pending |
 | MODE-01 | Phase 7 | Pending |
-| FPLG-01 | Phase 7 | Pending |
-| FPLG-02 | Phase 7 | Pending |
-| FPLG-03 | Phase 7 | Pending |
+| FMOD-01 | Phase 7 | Pending |
+| FMOD-02 | Phase 7 | Pending |
+| FMOD-03 | Phase 7 | Pending |
 | CTRL-02 | Phase 7 | Pending |
 | VIZ-01 | Phase 8 | Pending |
 | VIZ-02 | Phase 8 | Pending |
 
 **Coverage:**
 
-- v1 requirements: 35 total
-- Mapped to phases: 35 (100%) ✓
+- v1 requirements: 40 total
+- Mapped to phases: 40 (100%) ✓
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-16*
-*Last updated: 2026-06-16 after roadmap creation (8 phases)*
+*Last updated: 2026-06-21 — module platform pivot: PLUG/FPLG renamed to MOD/FMOD, MOD-06/07/08 and DISC-07/08 added, Notifications demoted to Phase 5.2 (see docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md)*

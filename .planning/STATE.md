@@ -2,33 +2,33 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 5 context gathered
+status: planning
+stopped_at: Module platform pivot applied — Phase 5 redefined, Phases 5.1/5.2 inserted
 last_updated: "2026-06-21T11:11:24.314Z"
-last_activity: 2026-06-21 -- Phase 05 planning complete
+last_activity: 2026-06-21 -- module platform pivot: Phase 5 replaced with Module Platform Foundation, 5.1 (Improve Device Identity) and 5.2 (Notifications) inserted
 progress:
-  total_phases: 11
+  total_phases: 13
   completed_phases: 5
   total_plans: 18
   completed_plans: 18
-  percent: 45
+  percent: 38
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-16)
+See: .planning/PROJECT.md (updated 2026-06-21)
 
 **Core value:** See every device on your network and what it's doing, in real time — and be able to act on it.
-**Current focus:** Phase 04 — security
+**Current focus:** Phase 5 — Module Platform Foundation (pivot applied, awaiting re-plan)
 
 ## Current Position
 
 Phase: 5
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-21 -- Phase 05 planning complete
+Plan: Not started — original 05-01..05-04 plans superseded, new scope needs `/gsd-plan-phase 5`
+Status: Roadmap updated; ready to re-plan
+Last activity: 2026-06-21 -- module platform pivot applied to ROADMAP.md/REQUIREMENTS.md/PROJECT.md
 
 Progress: [██████████] 100%
 
@@ -73,11 +73,19 @@ Progress: [██████████] 100%
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- [2026-06-21] Phase 5 edited: "Plugin System + Notifications" replaced with "Module Platform Foundation" — host infra (ModuleRegistry/EventBus/ModuleLoader/capability Protocols) + retrofit of Devices/Traffic/Security onto isolated, swappable modules. See docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md.
+- [2026-06-21] Phase 5.1 inserted after Phase 5 (URGENT): "Improve Device Identity" — promotes backlog item 999.1, moved ahead of Notifications.
+- [2026-06-21] Phase 5.2 inserted after Phase 5.1 (URGENT): "Notifications" — demoted from the original Phase 5 scope; now built clean on the new module contract with no retrofit baggage.
+- [2026-06-21] Original Phase 5 plans (05-01..05-04-PLAN.md) and 05-PATTERNS.md/05-CONTEXT.md marked superseded in place — built against the retired bolt-on plugin contract.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [2026-06-21]: Module platform pivot — capability-Protocol module contracts, ModuleRegistry resolving support interfaces by type (not module identity) for swappable implementations, per-module Postgres schema isolation, DeviceIdentity as sole source of truth for device data with Devices as a thin UI client. Full rationale in docs/superpowers/specs/2026-06-21-module-platform-pivot-design.md.
 - [Roadmap]: Python 3.13 baseline (aiounifi v91 requires >=3.13)
 - [Roadmap]: Capture engine is a separable component — topology (native macOS agent vs Linux host networking) resolved by a Phase 1 go/no-go spike before any capture code
 - [Roadmap]: Device Registry is the keystone — built in Phase 2 before everything that derives meaning from it
