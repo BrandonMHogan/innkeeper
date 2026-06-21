@@ -593,6 +593,8 @@ for module_id, instance in instances.items():
 
 ## Open Questions
 
+> **Note (post-planning):** Open Question 1's resolution is deferred by design to Plan 01 Task 2's empirical schema-portability spike script (`backend/tests/schema_portability_spike.py`), not answered analytically here. The spike runs before any module's `migrations/` directory is written, exactly per this question's own Recommendation below, and its PASS/FAIL verdict is recorded in `05-01-SUMMARY.md` for Plan 03 to consume. This is intentional sequencing, not an unresolved gap.
+
 1. **How should the test suite represent multiple Postgres schemas given the in-memory SQLite fixture?**
    - What we know: Production needs `device_identity`/`traffic`/`security`/`devices` as real Postgres schemas (D-11). The existing test fixture (`backend/tests/conftest.py`) uses a single in-memory SQLite engine with `Base.metadata.create_all`, which has no native multi-schema concept.
    - What's unclear: Whether `schema_translate_map` (Assumption A1) cleanly handles four simultaneous schema-to-`None` mappings without breaking SQLAlchemy's relationship/foreign-key resolution across "schemas" that are actually all flattened into the same SQLite file.
