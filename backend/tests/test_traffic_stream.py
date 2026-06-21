@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.models.bandwidth import BandwidthMetric
-from src.models.device import Device, DeviceType
+from src.modules.device_identity.models import Device, DeviceType
 from src.models.traffic_flow import TrafficFlow
 
 

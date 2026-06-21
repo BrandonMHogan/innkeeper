@@ -1,4 +1,4 @@
-from src.models.device import DeviceType
+from src.modules.device_identity.models import DeviceType
 
 # D-05: universal risky ports — flagged regardless of device type.
 # Classic unauthenticated/legacy-remote-access services.

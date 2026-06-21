@@ -2,10 +2,9 @@ from datetime import datetime
 
 from mac_vendor_lookup import AsyncMacLookup
 
-from src.models.device import DeviceType
-from src.models.discovered_identity import DiscoveredIdentity
-from src.services.identity_inference import infer
-from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.identity_inference import infer
+from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.models import DeviceType, DiscoveredIdentity
 
 
 def _identity(**overrides) -> DiscoveredIdentity:

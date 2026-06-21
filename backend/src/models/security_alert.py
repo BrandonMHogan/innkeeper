@@ -28,7 +28,9 @@ class SecurityAlert(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     # Nullable — unregistered/unknown-device alerts have no Device row to
     # reference (e.g. SEC-02's unknown-device-join alert).
-    device_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("devices.id"), nullable=True)
+    device_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("device_identity.devices.id"), nullable=True
+    )
     type: Mapped[str] = mapped_column(
         SAEnum(SecurityAlertType, name="securityalerttype", values_callable=lambda enum_cls: [e.value for e in enum_cls]),
         nullable=False,

@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth import require_auth
 from src.database import get_db
-from src.models.device import Device
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert
+from src.modules.device_identity.models import Device
 from src.services.port_rules import evaluate_open_ports
 
 router = APIRouter()

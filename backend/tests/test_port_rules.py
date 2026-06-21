@@ -1,4 +1,4 @@
-from src.models.device import DeviceType
+from src.modules.device_identity.models import DeviceType
 from src.services.port_rules import evaluate_open_ports
 
 

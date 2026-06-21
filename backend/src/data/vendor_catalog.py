@@ -1,4 +1,4 @@
-from src.models.device import DeviceType
+from src.modules.device_identity.models import DeviceType
 
 # D-01/D-02: curated friendly-name shortlist. Only vendors present here are
 # ever shown as "vendor" on a device card or in the Register dialog pre-fill

@@ -4,10 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.device import Device, DeviceType
-from src.models.device_mac_history import DeviceMacHistory
-from src.services.discovery import record_observation
-from src.services.identity_resolver import Observation
+from src.modules.device_identity.identity_resolver import Observation
+from src.modules.device_identity.models import Device, DeviceMacHistory, DeviceType
+from src.modules.device_identity.service import record_observation
 
 
 async def test_query_all_macs_for_device(test_db):

@@ -8,17 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.models.arp_event import ArpEvent
-from src.models.device import Device
 from src.models.dhcp_event import DhcpEvent
 from src.models.mdns_event import MdnsEvent
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType
 from src.models.traffic_flow import TrafficFlow
+from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
+from src.modules.device_identity.models import Device
+from src.modules.device_identity.service import record_observation
 from src.services.bandwidth_anomaly import check_bandwidth_anomaly
 from src.services.bandwidth_source import PassiveCaptureBandwidthSource
-from src.services.discovery import record_observation
-from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
 from src.services.port_rules import evaluate_open_ports
 from src.services.security_status import SecurityStatus, derive_status
 from src.services.threat_intel_source import get_default_threat_intel_source

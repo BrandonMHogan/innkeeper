@@ -1,3 +1,16 @@
+"""upsert_discovered_identity/upsert_device_mac_history/record_observation —
+moved verbatim from src/services/discovery.py into the device_identity
+support module, per Plan 03 Task 1's action.
+
+The only behavioral addition vs. the pre-retrofit version: record_observation
+publishes a "new_device" event via the shared event_bus singleton at the
+exact point a genuinely-new identity is written (inside
+upsert_discovered_identity's is_new_identity branch). Signature, return
+type, and commit timing are otherwise byte-identical to the pre-retrofit
+discovery.py — this function is on the capture container's hot ingest path
+(T-05-08) and must not silently change contract.
+"""
+
 from datetime import datetime
 
 from sqlalchemy import select
@@ -5,16 +18,15 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.device import Device
-from src.models.device_mac_history import DeviceMacHistory
-from src.models.discovered_identity import DiscoveredIdentity
 from src.models.security_alert import SecurityAlert, SecurityAlertType
-from src.services.identity_resolver import (
+from src.modules.device_identity.event_bus_singleton import event_bus
+from src.modules.device_identity.identity_resolver import (
     MDNS_PLACEHOLDER_MAC,
     HostnameFallbackResolver,
     IdentityResolver,
     Observation,
 )
+from src.modules.device_identity.models import Device, DeviceMacHistory, DiscoveredIdentity
 from src.services.security_status import SecurityStatus
 
 
@@ -36,7 +48,8 @@ async def upsert_discovered_identity(
     SEC-02/D-13: a pre-check distinguishes a brand-new identity from an
     update to an existing one — only the former fires exactly one
     unknown_device SecurityAlert (device_id=None, since no Device row
-    exists yet for an unregistered identity).
+    exists yet for an unregistered identity) and exactly one "new_device"
+    event_bus publish.
     """
     dialect_name = db.bind.dialect.name if db.bind is not None else db.get_bind().dialect.name
 
@@ -104,6 +117,11 @@ async def upsert_discovered_identity(
             )
         )
         await db.commit()
+
+        await event_bus.publish(
+            "new_device",
+            {"identity_key": identity_key, "mac": mac, "hostname": hostname},
+        )
 
 
 async def upsert_device_mac_history(

@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.device import Device
+from src.modules.device_identity.models import Device
 from src.models.traffic_flow import TrafficFlow
 
 # D-12: rolling window for "top talkers" ranking — smooths bursty traffic

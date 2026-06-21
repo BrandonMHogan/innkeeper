@@ -17,6 +17,8 @@ class PendingScanRequest(Base):
     __tablename__ = "pending_scan_requests"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    device_id: Mapped[int] = mapped_column(Integer, ForeignKey("devices.id"), nullable=False)
+    device_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("device_identity.devices.id"), nullable=False
+    )
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

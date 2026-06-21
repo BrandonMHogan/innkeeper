@@ -3,10 +3,9 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.device import Device, DeviceType
-from src.models.discovered_identity import DiscoveredIdentity
-from src.services.discovery import record_observation
-from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
+from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
+from src.modules.device_identity.models import Device, DeviceType, DiscoveredIdentity
+from src.modules.device_identity.service import record_observation
 
 
 async def test_record_observation_creates_discovered_identity(test_db):

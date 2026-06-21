@@ -4,8 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.models.security_alert import SecurityAlert, SecurityAlertType
-from src.services.discovery import record_observation
-from src.services.identity_resolver import Observation
+from src.modules.device_identity.identity_resolver import Observation
+from src.modules.device_identity.service import record_observation
 
 
 async def test_record_observation_new_identity_fires_unknown_device_alert(test_db):

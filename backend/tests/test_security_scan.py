@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.device import Device, DeviceType
+from src.modules.device_identity.models import Device, DeviceType
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType

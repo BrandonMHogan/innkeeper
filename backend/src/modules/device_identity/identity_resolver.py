@@ -1,3 +1,8 @@
+"""Observation/IdentityResolver/HostnameFallbackResolver/MDNS_PLACEHOLDER_MAC
+— moved verbatim from src/services/identity_resolver.py into the
+device_identity support module, per Plan 03 Task 1's action.
+"""
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -30,7 +35,7 @@ class HostnameFallbackResolver:
     """D-02/D-03: hostname is the primary identity key, MAC is the fallback.
 
     Kept pure/stateless (Pitfall 2) — registry-aware identity-key-change
-    logic belongs in discovery.py, not here.
+    logic belongs in service.py, not here.
     """
 
     def resolve(self, observation: Observation) -> str:

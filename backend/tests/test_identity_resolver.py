@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.services.identity_resolver import HostnameFallbackResolver, Observation
+from src.modules.device_identity.identity_resolver import HostnameFallbackResolver, Observation
 
 
 def test_hostname_fallback_resolver():

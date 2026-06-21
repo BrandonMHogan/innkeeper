@@ -1,11 +1,14 @@
+"""infer() — moved verbatim from src/services/identity_inference.py into
+the device_identity support module, per Plan 03 Task 1's action.
+"""
+
 from dataclasses import dataclass
 
 from mac_vendor_lookup import AsyncMacLookup, InvalidMacError, VendorNotFoundError
 
 from src.data.vendor_catalog import match_friendly_name, type_from_signal, type_from_vendor
-from src.models.device import DeviceType
-from src.models.discovered_identity import DiscoveredIdentity
-from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.models import DeviceType, DiscoveredIdentity
 
 # Pitfall 3: AsyncMacLookup lazily loads its vendor-prefix table on first
 # lookup() call. Instantiate once at module scope and reuse across every

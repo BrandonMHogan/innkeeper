@@ -17,7 +17,9 @@ class PortScanResult(Base):
     __tablename__ = "port_scan_results"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    device_id: Mapped[int] = mapped_column(Integer, ForeignKey("devices.id"), nullable=False)
+    device_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("device_identity.devices.id"), nullable=False
+    )
     scanned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     # JSON (not Postgres ARRAY) so the SQLite test fixture can also create
     # this column — portability over Postgres-specific typing.

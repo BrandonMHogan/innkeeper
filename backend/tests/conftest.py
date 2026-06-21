@@ -18,10 +18,7 @@ from src.models import (  # noqa: F401
     app_settings,
     arp_event,
     bandwidth,
-    device,
-    device_mac_history,
     dhcp_event,
-    discovered_identity,
     mdns_event,
     module_config,
     pending_scan_request,
@@ -29,6 +26,7 @@ from src.models import (  # noqa: F401
     security_alert,
     traffic_flow,
 )
+from src.modules.device_identity import models as device_identity_models  # noqa: F401
 
 
 @pytest.fixture
@@ -38,8 +36,19 @@ async def test_db():
     TimescaleDB-specific SQL (create_hypertable) only runs via Alembic
     migrations, never via Base.metadata.create_all, so it's naturally
     skipped here — no special-casing required.
+
+    schema_translate_map maps the device_identity-schema-qualified models
+    (Device/DiscoveredIdentity/DeviceMacHistory) onto the default SQLite
+    schema (None) — confirmed PASS by Plan 01's schema-portability spike
+    (05-01-SUMMARY.md), so Base.metadata.create_all continues to work
+    against in-memory SQLite even though those three models now declare
+    __table_args__ = {"schema": "device_identity"}.
     """
-    engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        echo=False,
+        execution_options={"schema_translate_map": {"device_identity": None}},
+    )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
@@ -89,9 +98,8 @@ async def seeded_traffic_db(test_db, client):
     from datetime import datetime, timedelta, timezone
 
     from src.models.bandwidth import BandwidthMetric
-    from src.models.device import Device, DeviceType
-    from src.models.device_mac_history import DeviceMacHistory
     from src.models.traffic_flow import TrafficFlow
+    from src.modules.device_identity.models import Device, DeviceMacHistory, DeviceType
 
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
     now = datetime.now(timezone.utc)

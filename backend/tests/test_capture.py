@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import src.routes.capture as capture_module
 from src.models.bandwidth import BandwidthMetric
-from src.models.device import Device, DeviceType
+from src.modules.device_identity.models import Device, DeviceType
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType
@@ -30,7 +30,7 @@ async def test_dhcp_ingest(client, test_db):
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
-    from src.models.discovered_identity import DiscoveredIdentity
+    from src.modules.device_identity.models import DiscoveredIdentity
 
     payload = {
         "src_mac": "aa:bb:cc:dd:ee:ff",
@@ -66,7 +66,7 @@ async def test_mdns_ingest_without_hostname_does_not_collide(client, test_db):
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
-    from src.models.discovered_identity import DiscoveredIdentity
+    from src.modules.device_identity.models import DiscoveredIdentity
 
     payload_one = {
         "hostname": None,
@@ -99,7 +99,7 @@ async def test_mdns_ingest_with_hostname_still_resolves_identity(client, test_db
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
-    from src.models.discovered_identity import DiscoveredIdentity
+    from src.modules.device_identity.models import DiscoveredIdentity
 
     payload = {
         "hostname": "iphone.local",

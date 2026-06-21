@@ -18,9 +18,8 @@ from sse_starlette.sse import EventSourceResponse
 from src.auth import require_auth
 from src.database import get_db
 from src.models.bandwidth import BandwidthMetric
-from src.models.device import Device
-from src.models.device_mac_history import DeviceMacHistory
 from src.models.traffic_flow import TrafficFlow
+from src.modules.device_identity.models import Device, DeviceMacHistory
 from src.services.domain_grouping import registered_domain
 from src.services.traffic_broadcaster import get_latest_snapshot
 

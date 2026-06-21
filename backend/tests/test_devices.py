@@ -4,9 +4,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.device import Device, DeviceType
-from src.models.discovered_identity import DiscoveredIdentity
-from src.services.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC
+from src.modules.device_identity.models import Device, DeviceType, DiscoveredIdentity
 
 
 async def _login(client):
