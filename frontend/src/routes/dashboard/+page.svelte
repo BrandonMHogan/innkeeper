@@ -11,6 +11,7 @@
   import NetworkBandwidthChart from '$lib/components/NetworkBandwidthChart.svelte';
   import SecurityAlertsBanner from '$lib/components/SecurityAlertsBanner.svelte';
   import ScanResultDialog from '$lib/components/ScanResultDialog.svelte';
+  import LinkedAppsSection from '$lib/components/LinkedAppsSection.svelte';
 
   interface DeviceListItem {
     id: number;
@@ -180,6 +181,8 @@
         />
       {/each}
     </div>
+
+    <LinkedAppsSection />
   </main>
 
   <RegisterDialog
