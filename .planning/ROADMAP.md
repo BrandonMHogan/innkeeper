@@ -176,8 +176,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Host infrastructure: capability Protocols, ModuleManifest, ModuleRegistry, ModuleLoader (graphlib topo-sort), EventBus, module_configs table, schema-portability spike
-- [ ] 05-02-PLAN.md — Linked Apps data model + dashboard empty-state section, frontend design-token/component-library consolidation
+- [x] 05-01-PLAN.md — Host infrastructure: capability Protocols, ModuleManifest, ModuleRegistry, ModuleLoader (graphlib topo-sort), EventBus, module_configs table, schema-portability spike
+- [x] 05-02-PLAN.md — Linked Apps data model + dashboard empty-state section, frontend design-token/component-library consolidation
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -284,7 +284,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
 | 4. Security | 4/4 | Complete    | 2026-06-20 |
-| 5. Module Platform Foundation | 0/TBD | Not started | - |
+| 5. Module Platform Foundation | 2/6 | In Progress|  |
 | 5.1. Improve Device Identity (INSERTED) | 0/TBD | Not started | - |
 | 5.2. Notifications (INSERTED) | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
