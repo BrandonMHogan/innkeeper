@@ -6,6 +6,7 @@ from src.models.device import Device, DeviceType
 from src.models.dhcp_event import DhcpEvent
 from src.models.discovered_identity import DiscoveredIdentity
 from src.models.mdns_event import MdnsEvent
+from src.models.module_config import ModuleConfig
 
 __all__ = [
     "Base",
@@ -17,4 +18,5 @@ __all__ = [
     "DhcpEvent",
     "DiscoveredIdentity",
     "MdnsEvent",
+    "ModuleConfig",
 ]
