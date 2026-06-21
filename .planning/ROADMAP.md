@@ -189,7 +189,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-05-PLAN.md — Security feature module retrofit (own schema, DeviceLookupInterface) + final main.py ModuleLoader consolidation
+- [x] 05-05-PLAN.md — Security feature module retrofit (own schema, DeviceLookupInterface) + final main.py ModuleLoader consolidation
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -284,7 +284,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
 | 4. Security | 4/4 | Complete    | 2026-06-20 |
-| 5. Module Platform Foundation | 4/6 | In Progress|  |
+| 5. Module Platform Foundation | 5/6 | In Progress|  |
 | 5.1. Improve Device Identity (INSERTED) | 0/TBD | Not started | - |
 | 5.2. Notifications (INSERTED) | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
