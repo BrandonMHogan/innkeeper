@@ -1,0 +1,1 @@
+{"content":"python-nmap PortScanner.scan(hosts, arguments='-sS') with no -p flag scans nmap's default top-1000 TCP ports; results parsed via scanner[host]['tcp'][port]['state'].","source":"web","provider":"websearch","confidence":"MEDIUM","fetched_at":"2026-06-20T11:32:07.745Z","ttl":86400000,"kind":"web"}
