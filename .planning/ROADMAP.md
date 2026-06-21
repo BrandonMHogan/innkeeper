@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Device Registry + Discovery** - Multi-source device discovery feeding a registry with named/owned devices and unknown-device detection (completed 2026-06-18)
 - [x] **Phase 3: Live Traffic + Bandwidth** - SSE-powered live traffic feed and per-device + network-wide bandwidth history on TimescaleDB (completed 2026-06-19)
 - [x] **Phase 4: Security** - Per-device port scans, security status, and alerts for unknown devices and suspicious traffic (completed 2026-06-20)
-- [ ] **Phase 5: Module Platform Foundation** - Module-host infrastructure (registry, event bus, capability protocols) and retrofit of Devices/Traffic/Security onto isolated, swappable modules
+- [x] **Phase 5: Module Platform Foundation** - Module-host infrastructure (registry, event bus, capability protocols) and retrofit of Devices/Traffic/Security onto isolated, swappable modules (completed 2026-06-21)
 - [ ] **Phase 5.1: Improve Device Identity** (INSERTED) - Deeper inference (hostname heuristics, broader mDNS parsing, MAC-randomization handling) inside the now-isolated DeviceIdentity module
 - [ ] **Phase 5.2: Notifications** (INSERTED) - First-party notification module (ntfy.sh/Pushover) built clean on the new module contract
 - [ ] **Phase 6: Dual-Mode + Control** - Travel mode passive scanning, mode switcher with capability-gated UI, auto-degrade, and device blocking
@@ -193,7 +193,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 05-06-PLAN.md — Module settings page (enable/disable + dependent confirmation), module nav entries
+- [x] 05-06-PLAN.md — Module settings page (enable/disable + dependent confirmation), module nav entries
 
 **UI hint**: yes
 
@@ -284,7 +284,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 5.1 → 5.2 → 6
 | 2. Device Registry + Discovery | 5/5 | Complete   | 2026-06-18 |
 | 3. Live Traffic + Bandwidth | 4/4 | Complete    | 2026-06-20 |
 | 4. Security | 4/4 | Complete    | 2026-06-20 |
-| 5. Module Platform Foundation | 5/6 | In Progress|  |
+| 5. Module Platform Foundation | 6/6 | Complete   | 2026-06-21 |
 | 5.1. Improve Device Identity (INSERTED) | 0/TBD | Not started | - |
 | 5.2. Notifications (INSERTED) | 0/TBD | Not started | - |
 | 6. Dual-Mode + Control | 0/TBD | Not started | - |
