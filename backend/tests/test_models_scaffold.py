@@ -26,6 +26,13 @@ async def test_metadata_create_all(test_db):
 
     Confirms create_hypertable (SQLite-incompatible) is correctly isolated
     to the Alembic migration and never invoked by create_all.
+
+    bandwidth_metrics is schema-qualified to "traffic" as of Plan 04's
+    retrofit (Base.metadata.tables keys schema-qualified tables as
+    "traffic.bandwidth_metrics", mirroring Plan 03's device_identity
+    schema-qualification of devices/discovered_identities/
+    device_mac_history) — asserted separately from the unqualified tables.
     """
     table_names = set(Base.metadata.tables.keys())
-    assert {"app_settings", "bandwidth_metrics", "arp_events"} <= table_names
+    assert {"app_settings", "arp_events"} <= table_names
+    assert "traffic.bandwidth_metrics" in table_names

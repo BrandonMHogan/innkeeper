@@ -3,14 +3,45 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.bandwidth import BandwidthMetric
-from src.routes.traffic import _resolve_device_macs
+from src.modules.device_identity.models import Device, DeviceMacHistory
+from src.modules.traffic.models import BandwidthMetric
 
 # D-09/RESEARCH.md Open Question 2 — provisional defaults, tunable without a
 # code-structure change since they're named constants, not magic numbers.
 ROLLING_WINDOW_DAYS = 14
 ANOMALY_THRESHOLD_MULTIPLIER = 3.0
 MIN_SAMPLE_DAYS = 7
+
+
+async def _resolve_device_macs(db: AsyncSession, device_id: int) -> set[str]:
+    """Resolves the full set of MACs a device has ever been associated
+    with, querying device_identity's Device/DeviceMacHistory directly via
+    the same `db` session check_bandwidth_anomaly was already given.
+
+    Deliberately NOT routed through DeviceLookupInterface (T-05-11's
+    general retrofit rule) — this function is called from capture.py's
+    queue_daily_scans, which already holds an open `db` session mid-request
+    and queries Device/SecurityAlert directly in the same transaction; the
+    route-level DeviceLookupInterface instance uses its own independently
+    constructed session factory, which would not see uncommitted state
+    from this caller's transaction. Pre-retrofit behavior (an inline
+    Device/DeviceMacHistory query) is preserved exactly for this same-session
+    consumer; only routes.py's per-request consumers go through
+    DeviceLookupInterface.lookup().
+    """
+    device = (await db.execute(select(Device).where(Device.id == device_id))).scalar_one_or_none()
+    if device is None:
+        return set()
+
+    history_macs = (
+        (await db.execute(select(DeviceMacHistory.mac).where(DeviceMacHistory.device_id == device_id)))
+        .scalars()
+        .all()
+    )
+    macs = set(history_macs)
+    if device.last_known_mac:
+        macs.add(device.last_known_mac)
+    return macs
 
 
 async def check_bandwidth_anomaly(db: AsyncSession, device_id: int) -> bool:

@@ -4,8 +4,11 @@ through the ModuleRegistry instead of importing device_identity's ORM
 models directly (D-05/RESEARCH.md Pattern 6).
 
 Contract (documented here since Plans 04/05 depend on it): lookup(identifier)
-accepts either a MAC address or an identity_key string and returns a
-DeviceInfo if a registered Device matches, or None if no match is found.
+accepts a numeric Device.id (as a string), a MAC address, or an identity_key
+string, and returns a DeviceInfo if a registered Device matches, or None if
+no match is found. Numeric-string identifiers are tried against Device.id
+first (Plan 04 extension — Traffic's routes are keyed by integer device_id
+path params, not MAC/identity_key).
 "None" (not a raised exception) is the "not found" signal — callers should
 treat a None return as "no registered device for this identifier", which
 mirrors the pre-retrofit routes' use of `scalar_one_or_none()` throughout

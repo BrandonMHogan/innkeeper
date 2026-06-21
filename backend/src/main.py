@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.host.event_bus import EventBus
@@ -14,47 +13,90 @@ from src.modules.device_identity import module as device_identity_module
 from src.modules.devices import manifest as devices_manifest
 from src.modules.devices import module as devices_module
 from src.modules.linked_apps import routes as linked_apps_routes
-from src.routes import auth, capture, security, traffic
-from src.services.traffic_broadcaster import update_snapshot_loop
+from src.modules.traffic import manifest as traffic_manifest
+from src.modules.traffic import module as traffic_module
+from src.routes import auth, capture, security
 from src.settings import get_settings
+
+
+_module_load_result = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from src.database import engine
 
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    broadcaster_stop_event = asyncio.Event()
-    broadcaster_task = asyncio.create_task(update_snapshot_loop(broadcaster_stop_event, session_factory))
+    # _load_native_modules() already ran at create_app() time (synchronous,
+    # no event loop yet) so routers are mounted before the test client's
+    # ASGITransport ever dispatches a request (httpx's ASGITransport never
+    # runs lifespan events, so module routes must be mounted eagerly — see
+    # Plan 03's precedent). The loader's per-capability try/except (D-03)
+    # already swallows HasCollector's asyncio.create_task() RuntimeError
+    # ("no running event loop") at that time and skips collector_tasks —
+    # now that lifespan() is executing inside uvicorn's real loop, retry
+    # wiring just the HasCollector capability for every loaded instance so
+    # Traffic's broadcaster loop actually starts in production.
+    collector_tasks = _start_collectors(_module_load_result)
 
     yield
 
-    broadcaster_stop_event.set()
-    broadcaster_task.cancel()
-    try:
-        await broadcaster_task
-    except asyncio.CancelledError:
-        pass
+    for stop_event, task in collector_tasks:
+        stop_event.set()
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
     await engine.dispose()
 
 
-def _load_native_modules(app: FastAPI) -> None:
-    """Boots device_identity/devices through Plan 01's ModuleLoader
-    (D-08/D-09) instead of hardcoded app.include_router calls. auth/capture/
-    security/traffic stay hardcoded — their retrofit onto the module
-    contract is Plans 04/05's scope, not this plan's.
+def _start_collectors(load_result) -> list[tuple[asyncio.Event, "asyncio.Task"]]:
+    """Starts a HasCollector task (D-08/MOD-05) for every loaded module
+    instance that satisfies the protocol — called from lifespan()'s startup
+    phase where a real event loop is guaranteed to be running, unlike
+    create_app()'s synchronous, no-loop context."""
+    from src.host.protocols import HasCollector
+
+    if load_result is None:
+        return []
+
+    tasks: list[tuple[asyncio.Event, "asyncio.Task"]] = []
+    for instance in load_result.instances.values():
+        if isinstance(instance, HasCollector):
+            stop_event = asyncio.Event()
+            task = asyncio.create_task(instance.run_collector(stop_event))
+            tasks.append((stop_event, task))
+    return tasks
+
+
+def _load_native_modules(app: FastAPI):
+    """Boots device_identity/devices/traffic through Plan 01's ModuleLoader
+    (D-08/D-09) instead of hardcoded app.include_router calls / a hardcoded
+    lifespan broadcaster task. auth/capture/security stay hardcoded — their
+    retrofit onto the module contract is Plan 05's scope, not this plan's.
+
+    Called synchronously from create_app() (module-import time, no running
+    event loop) so routers are mounted before any request — matching Plan
+    03's devices/device_identity precedent, required because httpx's
+    ASGITransport (used by every test fixture) never runs FastAPI's
+    lifespan events. Traffic's HasCollector-wired broadcaster loop is
+    actually started later, in lifespan()'s startup phase via
+    _start_collectors(), once a real event loop exists.
     """
     loader = ModuleLoader(registry=ModuleRegistry(), event_bus=EventBus())
-    manifests = [device_identity_manifest.MANIFEST, devices_manifest.MANIFEST]
+    manifests = [device_identity_manifest.MANIFEST, devices_manifest.MANIFEST, traffic_manifest.MANIFEST]
     factory_by_id = {
         device_identity_manifest.MANIFEST.id: device_identity_module.create,
         devices_manifest.MANIFEST.id: devices_module.create,
+        traffic_manifest.MANIFEST.id: traffic_module.create,
     }
     result = loader.load(manifests, factory_by_id)
 
     for module_id, router in result.routers:
         app.include_router(router, prefix=f"/api/modules/{module_id.replace('_', '-')}")
+
+    return result
 
 
 def create_app() -> FastAPI:
@@ -81,10 +123,10 @@ def create_app() -> FastAPI:
     app.include_router(auth.router, prefix="/api/auth")
     app.include_router(capture.router, prefix="/api/capture")
     app.include_router(security.router, prefix="/api/security")
-    app.include_router(traffic.router, prefix="/api/traffic")
     app.include_router(linked_apps_routes.router, prefix="/api/modules/linked-apps")
 
-    _load_native_modules(app)
+    global _module_load_result
+    _module_load_result = _load_native_modules(app)
 
     return app
 

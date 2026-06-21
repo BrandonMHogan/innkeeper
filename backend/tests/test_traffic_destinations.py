@@ -1,12 +1,12 @@
 async def test_destinations_groups_subdomains_under_registered_domain(seeded_traffic_db):
-    """GET /api/traffic/devices/{device_id}/destinations with seeded
+    """GET /api/modules/traffic/devices/{device_id}/destinations with seeded
     TrafficFlow rows for www.netflix.com and api.netflix.com returns a
     single grouped entry for "netflix.com" with bytes summed from both raw
     hostnames (proves D-10 grouping is applied at serialization, not
     capture, time)."""
     client, device_id = seeded_traffic_db
 
-    response = await client.get(f"/api/traffic/devices/{device_id}/destinations")
+    response = await client.get(f"/api/modules/traffic/devices/{device_id}/destinations")
     assert response.status_code == 200
     body = response.json()
     by_label = {entry["label"]: entry["bytes"] for entry in body["destinations"]}
@@ -20,7 +20,7 @@ async def test_destinations_falls_back_to_raw_ip_when_no_hostname(seeded_traffic
     MAC."""
     client, device_id = seeded_traffic_db
 
-    response = await client.get(f"/api/traffic/devices/{device_id}/destinations")
+    response = await client.get(f"/api/modules/traffic/devices/{device_id}/destinations")
     assert response.status_code == 200
     body = response.json()
     labels = {entry["label"] for entry in body["destinations"]}

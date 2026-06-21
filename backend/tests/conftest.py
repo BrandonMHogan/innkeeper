@@ -17,16 +17,15 @@ from src.models.base import Base
 from src.models import (  # noqa: F401
     app_settings,
     arp_event,
-    bandwidth,
     dhcp_event,
     mdns_event,
     module_config,
     pending_scan_request,
     port_scan_result,
     security_alert,
-    traffic_flow,
 )
 from src.modules.device_identity import models as device_identity_models  # noqa: F401
+from src.modules.traffic import models as traffic_models  # noqa: F401
 
 
 @pytest.fixture
@@ -38,16 +37,17 @@ async def test_db():
     skipped here — no special-casing required.
 
     schema_translate_map maps the device_identity-schema-qualified models
-    (Device/DiscoveredIdentity/DeviceMacHistory) onto the default SQLite
-    schema (None) — confirmed PASS by Plan 01's schema-portability spike
-    (05-01-SUMMARY.md), so Base.metadata.create_all continues to work
-    against in-memory SQLite even though those three models now declare
-    __table_args__ = {"schema": "device_identity"}.
+    (Device/DiscoveredIdentity/DeviceMacHistory) and the traffic-schema-
+    qualified models (TrafficFlow/BandwidthMetric, Plan 04) onto the default
+    SQLite schema (None) — confirmed PASS by Plan 01's schema-portability
+    spike (05-01-SUMMARY.md), so Base.metadata.create_all continues to work
+    against in-memory SQLite even though those models declare
+    __table_args__ = {"schema": "device_identity"} / {"schema": "traffic"}.
     """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
-        execution_options={"schema_translate_map": {"device_identity": None}},
+        execution_options={"schema_translate_map": {"device_identity": None, "traffic": None}},
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -56,8 +56,29 @@ async def test_db():
 
 
 @pytest.fixture
-async def client(test_db):
-    """FastAPI AsyncClient with the get_db dependency overridden to use test_db."""
+async def client(test_db, monkeypatch):
+    """FastAPI AsyncClient with the get_db dependency overridden to use test_db.
+
+    Also monkeypatches src.database.engine to test_db (Rule 1 fix, Plan 04):
+    DeviceIdentityModule/TrafficModule's create() factories
+    (src/modules/{device_identity,traffic}/module.py) construct their own
+    session factory directly from `src.database.engine` rather than through
+    the FastAPI Depends(get_db) override — needed because their
+    DeviceLookupInterface.lookup()/run_collector() capabilities are called
+    outside any per-request FastAPI dependency injection context (at
+    ModuleLoader.load() time and from the background collector loop,
+    respectively). Without this monkeypatch those factories would resolve
+    against the real (unmigrated, schema-less) module-level engine instead
+    of the test fixture's migrated in-memory SQLite DB, surfacing as
+    "no such table" once a route actually exercises lookup() (first
+    triggered by Plan 04's traffic retrofit — Plan 03's devices routes only
+    ever called list_all(db)/register(db, ...)/merge(db, ...), which take
+    the per-request `db` session as an explicit argument and never hit this
+    gap)."""
+    import src.database as database_module
+
+    monkeypatch.setattr(database_module, "engine", test_db)
+
     from src.database import get_db
     from src.main import app
 
@@ -97,9 +118,8 @@ async def seeded_traffic_db(test_db, client):
     """
     from datetime import datetime, timedelta, timezone
 
-    from src.models.bandwidth import BandwidthMetric
-    from src.models.traffic_flow import TrafficFlow
     from src.modules.device_identity.models import Device, DeviceMacHistory, DeviceType
+    from src.modules.traffic.models import BandwidthMetric, TrafficFlow
 
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
     now = datetime.now(timezone.utc)

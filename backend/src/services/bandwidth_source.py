@@ -3,7 +3,7 @@ from typing import Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.bandwidth import BandwidthMetric
+from src.modules.traffic.models import BandwidthMetric
 
 
 class BandwidthSource(Protocol):

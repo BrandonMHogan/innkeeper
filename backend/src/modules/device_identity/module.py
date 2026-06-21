@@ -29,11 +29,18 @@ class DeviceIdentityModule:
         self._db_session_factory = db_session_factory
 
     async def lookup(self, identifier: str) -> DeviceInfo | None:
-        """Resolves `identifier` (a MAC or an identity_key) to a DeviceInfo,
-        or None if no registered Device matches. `macs` is the union of the
-        device's current last_known_mac plus its full DeviceMacHistory —
-        the MAC-rotation-aware union logic moved here per RESEARCH.md
-        Pattern 6, out of routes/traffic.py::_resolve_device_macs."""
+        """Resolves `identifier` (a numeric Device.id, a MAC, or an
+        identity_key) to a DeviceInfo, or None if no registered Device
+        matches. `macs` is the union of the device's current
+        last_known_mac plus its full DeviceMacHistory — the
+        MAC-rotation-aware union logic moved here per RESEARCH.md Pattern 6,
+        out of routes/traffic.py::_resolve_device_macs.
+
+        Numeric-string identifiers are matched against Device.id first
+        (Rule 1 fix, Plan 04): Traffic's pre-retrofit routes were keyed by
+        the integer device_id path param, not a MAC/identity_key, so the
+        DeviceLookupInterface contract documented in 05-03-SUMMARY.md must
+        also support that lookup path for Plan 04/05's retrofits to work."""
         async with self._db_session_factory() as db:
             device = await self._find_device(db, identifier)
             if device is None:
@@ -103,6 +110,12 @@ class DeviceIdentityModule:
         return list(devices), list(identities)
 
     async def _find_device(self, db: AsyncSession, identifier: str) -> Device | None:
+        if identifier.isdigit():
+            by_id = (
+                await db.execute(select(Device).where(Device.id == int(identifier)))
+            ).scalar_one_or_none()
+            if by_id is not None:
+                return by_id
         by_mac = (await db.execute(select(Device).where(Device.last_known_mac == identifier))).scalar_one_or_none()
         if by_mac is not None:
             return by_mac
@@ -127,14 +140,27 @@ class DeviceIdentityModule:
         )
 
 
-def create(deps: dict[type, object]) -> DeviceIdentityModule:
-    """Constructor-injection factory satisfying provides=[DeviceLookupInterface],
-    requires=[] (D-08). Imports the live async session factory lazily to
-    avoid a circular import between src.database and the module package at
-    import time."""
+def _live_session_factory():
+    """Re-imports src.database and constructs a fresh async_sessionmaker
+    bound to whatever `src.database.engine` currently is, on every call —
+    not resolved once and cached (Rule 1 fix, Plan 04). _load_native_modules()
+    runs once at module-import time (create_app()), before any per-test
+    monkeypatch of src.database.engine can take effect; binding a session
+    factory to a literal `engine` reference at that moment would
+    permanently miss the test fixture's migrated/schema-translated engine.
+    Resolving fresh on every call lets tests' `monkeypatch.setattr(database_module,
+    "engine", test_db)` (see tests/conftest.py's `client` fixture) take
+    effect for every lookup(), not just ones issued after re-construction."""
     from sqlalchemy.ext.asyncio import async_sessionmaker
 
-    from src.database import engine
+    import src.database as database_module
 
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    return DeviceIdentityModule(session_factory)
+    return async_sessionmaker(database_module.engine, expire_on_commit=False)()
+
+
+def create(deps: dict[type, object]) -> DeviceIdentityModule:
+    """Constructor-injection factory satisfying provides=[DeviceLookupInterface],
+    requires=[] (D-08). Passes a callable that re-resolves the live engine on
+    every invocation rather than a session factory bound to a literal
+    engine captured once at create()-time."""
+    return DeviceIdentityModule(_live_session_factory)

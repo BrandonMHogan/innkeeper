@@ -13,10 +13,10 @@ from src.models.mdns_event import MdnsEvent
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType
-from src.models.traffic_flow import TrafficFlow
 from src.modules.device_identity.identity_resolver import MDNS_PLACEHOLDER_MAC, Observation
 from src.modules.device_identity.models import Device
 from src.modules.device_identity.service import record_observation
+from src.modules.traffic.models import TrafficFlow
 from src.services.bandwidth_anomaly import check_bandwidth_anomaly
 from src.services.bandwidth_source import PassiveCaptureBandwidthSource
 from src.services.port_rules import evaluate_open_ports

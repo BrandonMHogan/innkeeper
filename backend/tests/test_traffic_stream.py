@@ -4,9 +4,8 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.bandwidth import BandwidthMetric
 from src.modules.device_identity.models import Device, DeviceType
-from src.models.traffic_flow import TrafficFlow
+from src.modules.traffic.models import BandwidthMetric, TrafficFlow
 
 
 def _rollup_payload() -> dict:
@@ -130,7 +129,7 @@ async def test_traffic_ingest_rejects_non_loopback(test_db):
 async def test_compute_snapshot_ranks_top_talkers_descending_by_bytes(test_db):
     """_compute_snapshot's top_talkers list is sorted descending by summed
     bytes over the rolling window."""
-    from src.services.traffic_broadcaster import _compute_snapshot
+    from src.modules.traffic.broadcaster import _compute_snapshot
 
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
     now = datetime.now(timezone.utc)
@@ -162,7 +161,7 @@ async def test_compute_snapshot_ranks_top_talkers_descending_by_bytes(test_db):
 async def test_compute_snapshot_excludes_stale_rows_outside_rolling_window(test_db):
     """A TrafficFlow row older than the 5-minute rolling window is excluded
     from the top_talkers ranking (proves the rolling window, D-12)."""
-    from src.services.traffic_broadcaster import _compute_snapshot
+    from src.modules.traffic.broadcaster import _compute_snapshot
 
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
     now = datetime.now(timezone.utc)
@@ -193,7 +192,7 @@ async def test_update_snapshot_loop_survives_transient_compute_error(monkeypatch
     finding, live-traffic regression class)."""
     import asyncio
 
-    import src.services.traffic_broadcaster as broadcaster_module
+    import src.modules.traffic.broadcaster as broadcaster_module
 
     call_count = 0
 
@@ -241,8 +240,8 @@ async def test_stream_event_generator_yields_one_snapshot_event(monkeypatch):
     request.is_disconnected() to return True after the first iteration)
     yields exactly one {"event": "snapshot", ...} dict whose data field is
     valid JSON matching get_latest_snapshot()'s shape."""
-    from src.routes.traffic import traffic_stream
-    from src.services import traffic_broadcaster
+    from src.modules.traffic import broadcaster as traffic_broadcaster
+    from src.modules.traffic.routes import traffic_stream
 
     fake_snapshot = {"top_talkers": [], "active_connections": [], "computed_at": "2026-06-19T12:00:00Z"}
     monkeypatch.setattr(traffic_broadcaster, "_latest_snapshot", fake_snapshot)

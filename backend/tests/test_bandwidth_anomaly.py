@@ -2,8 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.bandwidth import BandwidthMetric
 from src.modules.device_identity.models import Device, DeviceType
+from src.modules.traffic.models import BandwidthMetric
 from src.services.bandwidth_anomaly import check_bandwidth_anomaly
 
 

@@ -5,11 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import src.routes.capture as capture_module
-from src.models.bandwidth import BandwidthMetric
-from src.modules.device_identity.models import Device, DeviceType
 from src.models.pending_scan_request import PendingScanRequest
 from src.models.port_scan_result import PortScanResult
 from src.models.security_alert import SecurityAlert, SecurityAlertType
+from src.modules.device_identity.models import Device, DeviceType
+from src.modules.traffic.models import BandwidthMetric
 from src.routes.capture import _detect_default_gateway
 from src.services.security_status import SecurityStatus
 
