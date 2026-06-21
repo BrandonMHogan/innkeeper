@@ -18,7 +18,7 @@ export async function apiGet(path: string): Promise<Response> {
 }
 
 export async function listDevices(): Promise<unknown[]> {
-  const res = await apiGet('/api/devices/');
+  const res = await apiGet('/api/modules/devices/');
   if (!res.ok) throw new Error('Failed to load devices');
   return res.json();
 }
@@ -30,11 +30,11 @@ export async function registerDevice(payload: {
   type: string;
   trusted: boolean;
 }): Promise<Response> {
-  return apiPost('/api/devices/', payload);
+  return apiPost('/api/modules/devices/', payload);
 }
 
 export async function mergeDevice(identityId: number, targetDeviceId: number): Promise<Response> {
-  return apiPost(`/api/devices/${identityId}/merge`, { target_device_id: targetDeviceId });
+  return apiPost(`/api/modules/devices/${identityId}/merge`, { target_device_id: targetDeviceId });
 }
 
 export function openTrafficStream(): EventSource {

@@ -52,7 +52,7 @@ async def test_register_device(client, test_db):
     identity_id = await _seed_identity(test_db)
 
     response = await client.post(
-        "/api/devices/",
+        "/api/modules/devices/",
         json={
             "identity_id": identity_id,
             "name": "Brandon's MacBook",
@@ -78,7 +78,7 @@ async def test_register_device_rejects_invalid_type(client, test_db):
     identity_id = await _seed_identity(test_db)
 
     response = await client.post(
-        "/api/devices/",
+        "/api/modules/devices/",
         json={
             "identity_id": identity_id,
             "name": "Brandon's MacBook",
@@ -96,7 +96,7 @@ async def test_merge_device(client, test_db):
     identity_id = await _seed_identity(test_db, mac="99:88:77:66:55:44")
 
     response = await client.post(
-        f"/api/devices/{identity_id}/merge",
+        f"/api/modules/devices/{identity_id}/merge",
         json={"target_device_id": device_id},
     )
     assert response.status_code == 200
@@ -120,7 +120,7 @@ async def test_register_device_with_placeholder_mac_does_not_persist_placeholder
     )
 
     response = await client.post(
-        "/api/devices/",
+        "/api/modules/devices/",
         json={
             "identity_id": identity_id,
             "name": "MDNS Only Speaker",
@@ -146,7 +146,7 @@ async def test_merge_device_with_placeholder_mac_does_not_overwrite_last_known_m
     )
 
     response = await client.post(
-        f"/api/devices/{identity_id}/merge",
+        f"/api/modules/devices/{identity_id}/merge",
         json={"target_device_id": device_id},
     )
     assert response.status_code == 200
@@ -161,7 +161,7 @@ async def test_unknown_device_listed(client, test_db):
     await _login(client)
     await _seed_identity(test_db)
 
-    response = await client.get("/api/devices/")
+    response = await client.get("/api/modules/devices/")
     assert response.status_code == 200
     body = response.json()
     assert len(body) == 1
@@ -173,7 +173,7 @@ async def test_unknown_identity_includes_inference_payload(client, test_db):
     await _seed_identity(test_db, mac="B8:E9:37:00:00:01")  # Sonos OUI
     await _seed_device(test_db)
 
-    response = await client.get("/api/devices/")
+    response = await client.get("/api/modules/devices/")
     assert response.status_code == 200
     body = response.json()
 
@@ -192,7 +192,7 @@ async def test_unknown_identity_includes_inference_payload(client, test_db):
 
 
 async def test_devices_requires_auth(client):
-    response = await client.get("/api/devices/")
+    response = await client.get("/api/modules/devices/")
     assert response.status_code == 401
 
 
@@ -200,7 +200,7 @@ async def test_list_devices_includes_security_fields(client, test_db):
     await _login(client)
     await _seed_device(test_db)
 
-    response = await client.get("/api/devices/")
+    response = await client.get("/api/modules/devices/")
     assert response.status_code == 200
     body = response.json()
     registered = next(d for d in body if d["unknown"] is False)
@@ -210,9 +210,9 @@ async def test_list_devices_includes_security_fields(client, test_db):
 
 
 async def test_list_devices_canonical_path_no_redirect(client, test_db):
-    """GET /api/devices/ (canonical, trailing slash) returns 200 with no
-    redirect; GET /api/devices (no trailing slash, the old broken frontend
-    literal) still returns 307 to the exact canonical Location (CR-02)."""
+    """GET /api/modules/devices/ (canonical, trailing slash) returns 200 with no
+    redirect; GET /api/modules/devices (no trailing slash) still returns 307 to
+    the exact canonical Location (CR-02)."""
     from src.database import get_db
     from src.main import app
 
@@ -234,11 +234,11 @@ async def test_list_devices_canonical_path_no_redirect(client, test_db):
             )
             assert login_response.status_code == 200
 
-            canonical_response = await raw_client.get("/api/devices/")
+            canonical_response = await raw_client.get("/api/modules/devices/")
             assert canonical_response.status_code == 200
 
-            redirect_response = await raw_client.get("/api/devices")
+            redirect_response = await raw_client.get("/api/modules/devices")
             assert redirect_response.status_code == 307
-            assert redirect_response.headers["location"] == "http://test/api/devices/"
+            assert redirect_response.headers["location"] == "http://test/api/modules/devices/"
     finally:
         app.dependency_overrides.clear()
