@@ -1,8 +1,16 @@
-"""GET /api/traffic/* — SSE live feed (TRAF-01) and historical bandwidth/
-destinations query routes (TRAF-02..04). Every route is gated behind the
-existing session-cookie auth (Depends(require_auth)) per ASVS V4/V12 — no
-new auth surface is introduced (T-03-09: accepted, single-user/household
-threat model).
+"""GET /api/modules/traffic/* — SSE live feed (TRAF-01) and historical
+bandwidth/destinations query routes (TRAF-02..04). Every route is gated
+behind the existing session-cookie auth (Depends(require_auth)) per ASVS
+V4/V12 plus Depends(require_module_enabled("traffic")) (T-05-12) — no new
+auth surface is introduced (T-03-09: accepted, single-user/household threat
+model).
+
+Relocated from src/routes/traffic.py (Plan 04). The pre-retrofit inline
+MAC-union helper is deleted entirely — every device-MAC resolution call
+site goes directly through the constructor-injected DeviceLookupInterface's
+lookup() (T-05-11), consuming the MAC-rotation-aware union exposed on
+DeviceInfo.macs per Plan 03's documented contract (05-03-SUMMARY.md),
+instead of querying Device/DeviceMacHistory directly.
 """
 
 import asyncio
@@ -13,15 +21,16 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from sse_starlette.sse import EventSourceResponse
 
 from src.auth import require_auth
 from src.database import get_db
-from src.models.bandwidth import BandwidthMetric
-from src.models.traffic_flow import TrafficFlow
-from src.modules.device_identity.models import Device, DeviceMacHistory
+from src.host.dependencies import require_module_enabled
+from src.modules.device_identity.interfaces import DeviceLookupInterface
+from src.modules.traffic.broadcaster import get_latest_snapshot
+from src.modules.traffic.models import BandwidthMetric, TrafficFlow
 from src.services.domain_grouping import registered_domain
-from src.services.traffic_broadcaster import get_latest_snapshot
 
 router = APIRouter()
 
@@ -30,46 +39,47 @@ router = APIRouter()
 # this exact set before the value ever reaches the SQL string, so no raw
 # user input is ever interpolated into a query.
 _CONTINUOUS_AGGREGATE_VIEWS = {
-    "daily": "bandwidth_daily",
-    "weekly": "bandwidth_weekly",
-    "monthly": "bandwidth_monthly",
+    "daily": "traffic.bandwidth_daily",
+    "weekly": "traffic.bandwidth_weekly",
+    "monthly": "traffic.bandwidth_monthly",
 }
 
 # Matches the bucket width used by each continuous aggregate's time_bucket()
-# call in 0004_traffic_flows.py — used for the SQLite-compatible fallback
-# query (portable GROUP BY over raw bandwidth_metrics rows) when the
+# call in migrations/0001_initial.py — used for the SQLite-compatible
+# fallback query (portable GROUP BY over raw bandwidth_metrics rows) when the
 # continuous aggregates don't exist (e.g. the test fixture's SQLite dialect).
 _VIEW_BUCKET_DAYS = {"daily": 1, "weekly": 7, "monthly": 30}
 
+# Module-level accessor pair (mirrors devices/routes.py's
+# set_device_identity()/get_device_identity() pattern, Plan 03) — the
+# constructor-injected DeviceLookupInterface instance the ModuleLoader
+# resolved at startup is wired into route handlers here, since it's resolved
+# once at load() time, not per-request.
+_device_lookup: DeviceLookupInterface | None = None
 
-async def _resolve_device_macs(db: AsyncSession, device_id: int) -> set[str]:
-    """Resolves the full set of MACs a device has ever been associated
-    with — DeviceMacHistory rows union the device's current
-    last_known_mac (covers the case where no history row exists yet for a
-    device's very first MAC). Raises 404 if the device doesn't exist.
 
-    Shared by device_bandwidth and device_destinations so the MAC-rotation
-    fix (Pitfall 1/Open Question 1) is implemented exactly once.
-    """
-    device = (await db.execute(select(Device).where(Device.id == device_id))).scalar_one_or_none()
-    if device is None:
-        raise HTTPException(status_code=404, detail="Device not found")
+def set_device_lookup(instance: DeviceLookupInterface) -> None:
+    """Called once by TrafficModule's constructor at ModuleLoader wiring
+    time (D-08) — injects the resolved DeviceLookupInterface instance for
+    every route handler in this file to use."""
+    global _device_lookup
+    _device_lookup = instance
 
-    history_macs = (
-        (await db.execute(select(DeviceMacHistory.mac).where(DeviceMacHistory.device_id == device_id)))
-        .scalars()
-        .all()
-    )
-    macs = set(history_macs)
-    if device.last_known_mac:
-        macs.add(device.last_known_mac)
-    return macs
+
+def get_device_lookup() -> DeviceLookupInterface:
+    if _device_lookup is None:
+        raise RuntimeError("DeviceLookupInterface not wired — ModuleLoader must run before requests are served")
+    return _device_lookup
 
 
 @router.get("/stream")
-async def traffic_stream(request: Request, _: None = Depends(require_auth)):
+async def traffic_stream(
+    request: Request,
+    _: None = Depends(require_auth),
+    __: None = Depends(require_module_enabled("traffic")),
+):
     """D-13: single global SSE channel — polls the shared in-memory
-    snapshot (updated by traffic_broadcaster.update_snapshot_loop) every 1s,
+    snapshot (updated by broadcaster.update_snapshot_loop) every 1s,
     yielding a new event only when the snapshot has changed since the last
     tick sent to this client."""
 
@@ -91,14 +101,15 @@ async def traffic_stream(request: Request, _: None = Depends(require_auth)):
 async def network_bandwidth(
     view: Literal["daily", "weekly", "monthly"],
     _: None = Depends(require_auth),
+    __: None = Depends(require_module_enabled("traffic")),
     db: AsyncSession = Depends(get_db),
 ):
     """TRAF-04: network-wide bandwidth totals as daily/weekly/monthly
     buckets. Reads the corresponding continuous aggregate
-    (bandwidth_daily/weekly/monthly, created in 03-01-PLAN.md's migration)
-    on Postgres; falls back to an equivalent portable GROUP BY over raw
-    bandwidth_metrics rows on any other dialect (e.g. SQLite in tests, where
-    the materialized continuous-aggregate views don't exist).
+    (traffic.bandwidth_daily/weekly/monthly) on Postgres; falls back to an
+    equivalent portable GROUP BY over raw bandwidth_metrics rows on any
+    other dialect (e.g. SQLite in tests, where the materialized
+    continuous-aggregate views don't exist).
 
     Declared before /bandwidth/{device_id} — FastAPI matches routes in
     declaration order, and a literal path segment must be registered ahead
@@ -147,6 +158,7 @@ async def device_bandwidth(
     start: datetime,
     end: datetime,
     _: None = Depends(require_auth),
+    __: None = Depends(require_module_enabled("traffic")),
     db: AsyncSession = Depends(get_db),
 ):
     """TRAF-02: historical bandwidth for a device over any time range,
@@ -157,7 +169,10 @@ async def device_bandwidth(
     aggregate) — acceptable for this phase's scope since per-device ranges
     are bounded by what a single household generates.
     """
-    macs = await _resolve_device_macs(db, device_id)
+    device_info = await get_device_lookup().lookup(str(device_id))
+    if device_info is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    macs = device_info.macs
 
     rows = (
         (
@@ -185,12 +200,16 @@ async def device_bandwidth(
 async def device_destinations(
     device_id: int,
     _: None = Depends(require_auth),
+    __: None = Depends(require_module_enabled("traffic")),
     db: AsyncSession = Depends(get_db),
 ):
     """TRAF-03: per-device destination breakdown, grouped by registered
     domain (D-10) with raw-IP fallback (D-09) — resolves the device's full
     MAC history (same fix as device_bandwidth)."""
-    macs = await _resolve_device_macs(db, device_id)
+    device_info = await get_device_lookup().lookup(str(device_id))
+    if device_info is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    macs = device_info.macs
 
     rows = (
         (await db.execute(select(TrafficFlow).where(TrafficFlow.device_mac.in_(macs)))).scalars().all()

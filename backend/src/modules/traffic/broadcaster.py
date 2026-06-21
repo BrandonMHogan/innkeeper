@@ -1,11 +1,16 @@
 """D-13: single global SSE snapshot broadcaster.
 
-One background task (update_snapshot_loop, started in main.py's lifespan)
-periodically recomputes the full live snapshot (top talkers over a 5-minute
-rolling window per D-12, plus raw active connections) into a single
-module-level dict. Every connected SSE client reads from this shared state
-on each tick rather than re-querying the DB per client — D-13's "one
-channel, full snapshot, fan-out" design.
+One background loop (run_collector, wired as a HasCollector capability by
+ModuleLoader — see module.py) periodically recomputes the full live snapshot
+(top talkers over a 5-minute rolling window per D-12, plus raw active
+connections) into a single module-level dict. Every connected SSE client
+reads from this shared state on each tick rather than re-querying the DB per
+client — D-13's "one channel, full snapshot, fan-out" design.
+
+Relocated from src/services/traffic_broadcaster.py (Plan 04) — internal loop
+mechanics (stop_event.is_set()/asyncio.wait_for(stop_event.wait(), timeout=7))
+are unchanged; only the entry point's name/signature changes to satisfy
+HasCollector (run_collector(self, stop_event)).
 """
 
 import asyncio
@@ -15,7 +20,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.device_identity.models import Device
-from src.models.traffic_flow import TrafficFlow
+from src.modules.traffic.models import TrafficFlow
 
 # D-12: rolling window for "top talkers" ranking — smooths bursty traffic
 # so the ranking doesn't flicker/reorder on every update.
@@ -38,8 +43,8 @@ async def _compute_snapshot(db: AsyncSession) -> dict:
     Device resolution uses Device.last_known_mac only (not the full MAC
     history) — acceptable here because the rolling window (5 minutes) is far
     shorter than any realistic MAC-rotation interval, unlike the historical
-    queries in routes/traffic.py's bandwidth/destinations endpoints, which
-    must resolve a device's full MAC history.
+    queries in routes.py's bandwidth/destinations endpoints, which must
+    resolve a device's full MAC history via DeviceLookupInterface.
     """
     window_start = datetime.now(timezone.utc) - _ROLLING_WINDOW
 
@@ -92,8 +97,8 @@ async def _compute_snapshot(db: AsyncSession) -> dict:
 
 
 async def update_snapshot_loop(stop_event: asyncio.Event, session_factory) -> None:
-    """Background loop started in main.py's lifespan — recomputes the
-    snapshot every 7s (D-11: same cadence as capture's FLUSH_INTERVAL).
+    """Background loop — recomputes the snapshot every 7s (D-11: same
+    cadence as capture's FLUSH_INTERVAL).
 
     A single transient DB error (e.g. a momentary connection drop) must not
     permanently kill this loop for the process lifetime — every SSE client's
@@ -111,3 +116,14 @@ async def update_snapshot_loop(stop_event: asyncio.Event, session_factory) -> No
             await asyncio.wait_for(stop_event.wait(), timeout=7)
         except asyncio.TimeoutError:
             pass
+
+
+async def run_collector(stop_event: asyncio.Event, session_factory) -> None:
+    """HasCollector-satisfying entry point — thin wrapper delegating to
+    update_snapshot_loop with zero changes to its internal mechanics. The
+    module-bound version (TrafficModule.run_collector, see module.py) closes
+    over session_factory so the loader's
+    `instance.run_collector(stop_event)` call (single-arg per the
+    HasCollector Protocol) reaches this exact loop.
+    """
+    await update_snapshot_loop(stop_event, session_factory)
