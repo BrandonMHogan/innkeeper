@@ -18,7 +18,7 @@ from src.modules.security import manifest as security_manifest
 from src.modules.security import module as security_module
 from src.modules.traffic import manifest as traffic_manifest
 from src.modules.traffic import module as traffic_module
-from src.routes import auth, capture
+from src.routes import auth, capture, modules
 from src.settings import get_settings
 
 
@@ -106,6 +106,16 @@ def _load_native_modules(app: FastAPI):
         linked_apps_manifest.MANIFEST.id: linked_apps_module.create,
     }
     result = loader.load(manifests, factory_by_id)
+
+    # Host-level settings router (backend/src/routes/modules.py) needs the
+    # manifest list to compute dependents for the destructive-confirmation
+    # check on toggle — set this before mounting per-module routers so the
+    # settings router's specific literal "/api/modules/" path is registered
+    # first (FastAPI route-resolution precedent: specific literal paths
+    # before parameterized per-module prefixes, per STATE.md's Phase 03
+    # P03 lesson cited in 05-06-PLAN.md).
+    modules.set_manifests(manifests)
+    app.include_router(modules.router, prefix="/api/modules")
 
     for module_id, router in result.routers:
         app.include_router(router, prefix=f"/api/modules/{module_id.replace('_', '-')}")
