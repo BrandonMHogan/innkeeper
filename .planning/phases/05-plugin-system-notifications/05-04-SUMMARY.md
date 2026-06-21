@@ -151,6 +151,10 @@ None — every artifact this plan produces is wired to real data sources; no har
 
 None — every new surface this plan introduces was already covered by the plan's own `<threat_model>` (T-05-11, T-05-12, T-05-13), and no additional security-relevant surface (new endpoints, auth paths, file access, schema changes at trust boundaries) was introduced beyond what that threat model already accounts for. The `DeviceLookupInterface` numeric-device_id extension is a backward-compatible read-path addition to an existing in-process Protocol boundary, not a new trust boundary.
 
+## Self-Check: PASSED
+
+All created artifacts (`backend/src/modules/traffic/{__init__,manifest,module,routes,models,broadcaster}.py`, `backend/src/modules/traffic/migrations/0001_initial.py`, this SUMMARY.md) verified present on disk. All three commits (`3e53104`, `c42b69e`, `2809879`) verified present in `git log`.
+
 ---
 *Phase: 05-plugin-system-notifications (directory name predates the module-platform pivot; phase content is "Module Platform Foundation" per ROADMAP.md)*
 *Completed: 2026-06-21*
