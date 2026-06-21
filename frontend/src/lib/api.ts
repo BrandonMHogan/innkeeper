@@ -90,3 +90,9 @@ export async function getScanResult(
   if (!res.ok) throw new Error('Failed to load scan result');
   return res.json();
 }
+
+export async function getLinkedApps(): Promise<unknown[]> {
+  const res = await apiGet('/api/modules/linked-apps/');
+  if (!res.ok) throw new Error('Failed to load linked apps');
+  return res.json();
+}
