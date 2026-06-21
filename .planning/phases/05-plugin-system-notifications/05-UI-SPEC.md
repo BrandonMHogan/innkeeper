@@ -55,14 +55,27 @@ Exceptions:
 
 Formalizing the inline-style values already established in `dashboard/+page.svelte` and component files (Phases 1-4) into a declared scale. New module pages (settings/modules, `/modules/[slug]`, Linked Apps) must use these values — prefer Tailwind utility classes (`text-sm`, `font-semibold`, etc.) over hand-written inline `style=` strings going forward, but the **pixel/weight/line-height values themselves must match this table**.
 
+**Active contract for Phase 5's new surfaces (module settings page, nav entries, Linked Apps cards): exactly 2 weights.**
+
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body / label | 14px | 500 (medium) | 1.4 |
 | Section label (muted) | 14px | 500 (medium) | 1.4 |
-| Card title | 16px | 600 (semibold) | 1.3 |
 | Page heading (h1) | 28px | 700 (bold) | 1.15 |
 
-**Declared scale: exactly 3 sizes (14 / 16 / 28), exactly 2 weights (500 / 700) plus one bridging semibold (600) reserved for card/dialog titles only** — this matches what Phases 1-4 already shipped; do not introduce a 4th size or a 5th weight for Phase 5's new surfaces (module settings page, nav entries, Linked Apps cards). Module nav entry labels use the body/label role (14px/500/1.4).
+Phase 5's new surfaces use **2 sizes, 2 weights** from this table only (14/500 and 28/700). Module nav entry labels use the body/label role (14px/500/1.4). There is no "card title" role in Phase 5's new surfaces — module settings rows and Linked Apps cards use body/label (14px/500) for their text, not a distinct heading weight, per the empty-state and settings-row interaction notes below.
+
+### Inherited exception — Phase 1-4 section-heading pattern (600 weight)
+
+Grepping the actual codebase (not the previous draft's invented "16px Card title" role, which does not exist anywhere in code) surfaces one real pre-existing weight-600 pattern, unchanged since Phases 1-4 and out of scope for this phase to alter:
+
+| Role | Size | Weight | Line Height | Cited usage |
+|------|------|--------|--------------|--------------|
+| Section heading (h2, inside card/banner) | 20px | 600 (semibold) | 1.2 | `frontend/src/lib/components/NetworkBandwidthChart.svelte:60`, `DestinationsBreakdown.svelte:48`, `LiveTrafficFeed.svelte:87`, `BandwidthHistoryChart.svelte:90`, `SecurityAlertsBanner.svelte:89` (`AlertTitle`), `ScanResultDialog.svelte:120` |
+
+This is a **one-time waiver request**, not a relabeled "bridge" weight: Phase 5's frontend scope (per CONTEXT.md D-18–D-22) is explicitly retrofit-and-consolidate, not redesign — the Devices/Traffic/Security pages being retrofitted onto module routes keep this exact 20px/600/1.2 section-heading style unchanged, because changing it would violate the retrofit's behavior/visual-parity requirement. Phase 5 does not introduce any *new* use of weight 600 — the module settings page and Linked Apps cards (this phase's only net-new surfaces) use 14px/500 and 28px/700 exclusively, per the active contract above. Dialog titles on net-new dialogs (if any are added this phase) use the unstyled shadcn `DialogTitle` default (no inline weight override), matching `MergeDialog.svelte`/`RegisterDialog.svelte` precedent — not the 600-weight section-heading pattern.
+
+**Net effect:** 3 sizes (14/20/28) and 3 weights (500/600/700) exist in the full inherited codebase, but Phase 5's new work introduces zero new sizes and zero new weights — it reuses 14/500 and 28/700 for everything net-new, and leaves the pre-existing 20/600 section-heading pattern untouched inside retrofitted pages only.
 
 ---
 
@@ -128,11 +141,13 @@ These two surfaces are net-new (not a retrofit of existing markup) and need expl
 ### Module settings page (MOD-02)
 - One row per module: `display_name`, enable/disable toggle, optional "Configure" affordance (deferred to whichever module actually needs settings — e.g. Phase 5.2's Notifications channel/topic fields — this phase only needs the list + toggle, not a generic settings-form renderer).
 - Disabling a module that other enabled modules `require` triggers the destructive-confirmation copy above before committing.
+- **Focal point:** the enable/disable toggle is the focal point of each settings row — it's the only interactive control and the only element that changes state, so it must carry the row's visual weight (accent color when on, per the Color section above), with `display_name` as secondary/supporting text rather than competing for attention.
 
 ### Linked Apps section (MOD-08)
 - Lives on the dashboard (or settings page — Claude's Discretion on exact placement, not locked by CONTEXT.md) as a card-grid section using the exact same `grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))` / 24px gap pattern as the Devices card grid.
 - Zero entries today (v1 ships no real linked module) → renders the empty-state heading/body above, not an empty grid with no explanation.
 - A linked-app card (when one eventually exists) shows `icon_url`, `name`, and opens `target_url` — out of scope to design the card's internals further this phase since no real entry ships.
+- **Focal point:** the empty-state heading ("No linked apps yet") is the focal point of this section when zero linked apps exist — it must use the page-heading-adjacent visual weight (not buried as muted/secondary text) since it's the only content in the section; once a real card exists, the focal point shifts to the card's `name` text per-card, with `icon_url` as a smaller supporting visual anchor to its left.
 
 ---
 
