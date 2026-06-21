@@ -172,7 +172,29 @@ Plans:
   5. A shared frontend design-token source and shared component library exist and are used by the retrofitted Devices/Traffic/Security UI, proving the "use ours by default, opt out if needed" convention holds across modules
   6. A linked-module manifest format and a "Linked Apps" dashboard section exist (data model + empty-state UI only — no real third-party module ships this phase)
 
-**Plans**: TBD — supersedes the 4 plans originally drafted in `05-01` through `05-04-PLAN.md` (built against the retired bolt-on plugin contract; see `.planning/phases/05-plugin-system-notifications/`)
+**Plans**: 6 plans (supersedes the 4 plans originally drafted against the retired bolt-on plugin contract; see `.planning/phases/05-plugin-system-notifications/_superseded-bolt-on-plugin-model/`)
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Host infrastructure: capability Protocols, ModuleManifest, ModuleRegistry, ModuleLoader (graphlib topo-sort), EventBus, module_configs table, schema-portability spike
+- [ ] 05-02-PLAN.md — Linked Apps data model + dashboard empty-state section, frontend design-token/component-library consolidation
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — DeviceIdentity support module extraction (own Postgres schema, DeviceLookupInterface) + Devices feature module retrofit
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-04-PLAN.md — Traffic feature module retrofit (own schema, DeviceLookupInterface, HasCollector-wrapped broadcaster)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-05-PLAN.md — Security feature module retrofit (own schema, DeviceLookupInterface) + final main.py ModuleLoader consolidation
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 05-06-PLAN.md — Module settings page (enable/disable + dependent confirmation), module nav entries
+
 **UI hint**: yes
 
 ### Phase 5.1: Improve Device Identity (INSERTED)
