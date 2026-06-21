@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from src.models.security_alert import SecurityAlert, SecurityAlertType
+from src.modules.security.models import SecurityAlert, SecurityAlertType
 from src.modules.device_identity.identity_resolver import Observation
 from src.modules.device_identity.service import record_observation
 

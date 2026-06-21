@@ -5,6 +5,7 @@ from src.models.dhcp_event import DhcpEvent
 from src.models.mdns_event import MdnsEvent
 from src.models.module_config import ModuleConfig
 from src.modules.device_identity.models import Device, DeviceMacHistory, DeviceType, DiscoveredIdentity
+from src.modules.security.models import PendingScanRequest, PortScanResult, SecurityAlert, SecurityAlertType
 from src.modules.traffic.models import BandwidthMetric, TrafficFlow
 
 __all__ = [
@@ -19,5 +20,9 @@ __all__ = [
     "DiscoveredIdentity",
     "MdnsEvent",
     "ModuleConfig",
+    "PendingScanRequest",
+    "PortScanResult",
+    "SecurityAlert",
+    "SecurityAlertType",
     "TrafficFlow",
 ]

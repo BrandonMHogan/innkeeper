@@ -4,9 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.modules.device_identity.models import Device, DeviceType
-from src.models.pending_scan_request import PendingScanRequest
-from src.models.port_scan_result import PortScanResult
-from src.models.security_alert import SecurityAlert, SecurityAlertType
+from src.modules.security.models import PendingScanRequest, PortScanResult, SecurityAlert, SecurityAlertType
 from src.services.security_status import SecurityStatus
 
 
@@ -37,7 +35,7 @@ async def test_trigger_scan_creates_pending_request(client, test_db):
     await _login(client)
     device_id = await _seed_device(test_db)
 
-    response = await client.post(f"/api/security/scan/{device_id}")
+    response = await client.post(f"/api/modules/security/scan/{device_id}")
     assert response.status_code == 202
 
     session_maker = async_sessionmaker(test_db, expire_on_commit=False)
@@ -50,12 +48,12 @@ async def test_trigger_scan_creates_pending_request(client, test_db):
 
 async def test_trigger_scan_nonexistent_device_404(client, test_db):
     await _login(client)
-    response = await client.post("/api/security/scan/9999")
+    response = await client.post("/api/modules/security/scan/9999")
     assert response.status_code == 404
 
 
 async def test_trigger_scan_requires_auth(client, test_db):
-    response = await client.post("/api/security/scan/1")
+    response = await client.post("/api/modules/security/scan/1")
     assert response.status_code == 401
 
 
@@ -85,7 +83,7 @@ async def test_list_alerts_only_unacknowledged(client, test_db):
         )
         await db.commit()
 
-    response = await client.get("/api/security/alerts")
+    response = await client.get("/api/modules/security/alerts")
     assert response.status_code == 200
     body = response.json()
     assert len(body) == 1
@@ -109,16 +107,16 @@ async def test_ack_alert(client, test_db):
         await db.refresh(alert)
         alert_id = alert.id
 
-    response = await client.post(f"/api/security/alerts/{alert_id}/ack")
+    response = await client.post(f"/api/modules/security/alerts/{alert_id}/ack")
     assert response.status_code == 200
 
-    list_response = await client.get("/api/security/alerts")
+    list_response = await client.get("/api/modules/security/alerts")
     assert list_response.json() == []
 
 
 async def test_ack_alert_nonexistent_404(client, test_db):
     await _login(client)
-    response = await client.post("/api/security/alerts/9999/ack")
+    response = await client.post("/api/modules/security/alerts/9999/ack")
     assert response.status_code == 404
 
 
@@ -146,11 +144,11 @@ async def test_ack_all_alerts(client, test_db):
         )
         await db.commit()
 
-    response = await client.post("/api/security/alerts/ack-all")
+    response = await client.post("/api/modules/security/alerts/ack-all")
     assert response.status_code == 200
     assert response.json() == {"acknowledged_count": 2}
 
-    list_response = await client.get("/api/security/alerts")
+    list_response = await client.get("/api/modules/security/alerts")
     assert list_response.json() == []
 
 
@@ -169,7 +167,7 @@ async def test_get_scan_result_flags_ports(client, test_db):
         )
         await db.commit()
 
-    response = await client.get(f"/api/security/scan/{device_id}")
+    response = await client.get(f"/api/modules/security/scan/{device_id}")
     assert response.status_code == 200
     body = response.json()
     assert body["scanned_at"] is not None
@@ -182,17 +180,17 @@ async def test_get_scan_result_never_scanned(client, test_db):
     await _login(client)
     device_id = await _seed_device(test_db)
 
-    response = await client.get(f"/api/security/scan/{device_id}")
+    response = await client.get(f"/api/modules/security/scan/{device_id}")
     assert response.status_code == 200
     assert response.json() == {"scanned_at": None, "ports": []}
 
 
 async def test_get_scan_result_nonexistent_device_404(client, test_db):
     await _login(client)
-    response = await client.get("/api/security/scan/9999")
+    response = await client.get("/api/modules/security/scan/9999")
     assert response.status_code == 404
 
 
 async def test_get_scan_result_requires_auth(client, test_db):
-    response = await client.get("/api/security/scan/1")
+    response = await client.get("/api/modules/security/scan/1")
     assert response.status_code == 401

@@ -20,11 +20,9 @@ from src.models import (  # noqa: F401
     dhcp_event,
     mdns_event,
     module_config,
-    pending_scan_request,
-    port_scan_result,
-    security_alert,
 )
 from src.modules.device_identity import models as device_identity_models  # noqa: F401
+from src.modules.security import models as security_models  # noqa: F401
 from src.modules.traffic import models as traffic_models  # noqa: F401
 
 
@@ -47,7 +45,7 @@ async def test_db():
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
-        execution_options={"schema_translate_map": {"device_identity": None, "traffic": None}},
+        execution_options={"schema_translate_map": {"device_identity": None, "traffic": None, "security": None}},
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

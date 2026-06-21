@@ -18,7 +18,6 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.security_alert import SecurityAlert, SecurityAlertType
 from src.modules.device_identity.event_bus_singleton import event_bus
 from src.modules.device_identity.identity_resolver import (
     MDNS_PLACEHOLDER_MAC,
@@ -27,6 +26,7 @@ from src.modules.device_identity.identity_resolver import (
     Observation,
 )
 from src.modules.device_identity.models import Device, DeviceMacHistory, DiscoveredIdentity
+from src.modules.security.models import SecurityAlert, SecurityAlertType
 from src.services.security_status import SecurityStatus
 
 

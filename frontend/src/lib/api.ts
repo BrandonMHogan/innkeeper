@@ -66,27 +66,27 @@ export async function getDeviceDestinations(deviceId: number): Promise<unknown> 
 }
 
 export async function triggerScan(deviceId: number): Promise<Response> {
-  return apiPost(`/api/security/scan/${deviceId}`, {});
+  return apiPost(`/api/modules/security/scan/${deviceId}`, {});
 }
 
 export async function listAlerts(): Promise<unknown[]> {
-  const res = await apiGet('/api/security/alerts');
+  const res = await apiGet('/api/modules/security/alerts');
   if (!res.ok) throw new Error('Failed to load security alerts');
   return res.json();
 }
 
 export async function ackAlert(alertId: number): Promise<Response> {
-  return apiPost(`/api/security/alerts/${alertId}/ack`, {});
+  return apiPost(`/api/modules/security/alerts/${alertId}/ack`, {});
 }
 
 export async function ackAllAlerts(): Promise<Response> {
-  return apiPost('/api/security/alerts/ack-all', {});
+  return apiPost('/api/modules/security/alerts/ack-all', {});
 }
 
 export async function getScanResult(
   deviceId: number
 ): Promise<{ scanned_at: string | null; ports: Array<{ port: number; flag: 'risky' | 'unexpected' | 'expected' }> }> {
-  const res = await apiGet(`/api/security/scan/${deviceId}`);
+  const res = await apiGet(`/api/modules/security/scan/${deviceId}`);
   if (!res.ok) throw new Error('Failed to load scan result');
   return res.json();
 }
