@@ -12,6 +12,7 @@
   import SecurityAlertsBanner from '$lib/components/SecurityAlertsBanner.svelte';
   import ScanResultDialog from '$lib/components/ScanResultDialog.svelte';
   import LinkedAppsSection from '$lib/components/LinkedAppsSection.svelte';
+  import ModuleNav from '$lib/components/ModuleNav.svelte';
 
   interface DeviceListItem {
     id: number;
@@ -130,9 +131,19 @@
 
 {#if authenticated}
   <main style="padding: 24px;">
-    <h1 style="font-size: 28px; font-weight: 700; line-height: 1.15; color: var(--color-fg); margin: 0 0 16px 0;">
-      Dashboard
-    </h1>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <h1 style="font-size: 28px; font-weight: 700; line-height: 1.15; color: var(--color-fg); margin: 0;">
+        Dashboard
+      </h1>
+      <a
+        href="/settings/modules"
+        style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--color-muted); text-decoration: none;"
+      >
+        Modules
+      </a>
+    </div>
+
+    <ModuleNav />
 
     <LiveTrafficFeed />
 

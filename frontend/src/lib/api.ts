@@ -96,3 +96,13 @@ export async function getLinkedApps(): Promise<unknown[]> {
   if (!res.ok) throw new Error('Failed to load linked apps');
   return res.json();
 }
+
+export async function listModules(): Promise<unknown[]> {
+  const res = await apiGet('/api/modules/');
+  if (!res.ok) throw new Error('Failed to load modules');
+  return res.json();
+}
+
+export async function toggleModule(moduleId: string, confirm = false): Promise<Response> {
+  return apiPost(`/api/modules/${moduleId}/toggle`, { confirm });
+}
